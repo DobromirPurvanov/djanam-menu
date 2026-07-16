@@ -1,20 +1,14 @@
-FROM node:20-alpine AS base
+FROM node:20-alpine AS build
 WORKDIR /app
-
-FROM base AS deps
 COPY package.json package-lock.json ./
-RUN npm config set registry https://npm.mirrors.msh.team
-RUN --mount=type=cache,target=/root/.npm \
-    npm ci --prefer-offline --no-audit
-
-FROM deps AS build
+RUN npm ci --no-audit --no-fund
 COPY . .
 RUN npm run build
 
-FROM node:20-alpine AS production
-COPY --from=deps /app/node_modules ./node_modules
+FROM node:20-alpine
+WORKDIR /app
+ENV NODE_ENV=production
 COPY --from=build /app/dist ./dist
-COPY package.json .env ./
-
+COPY package.json ./
 EXPOSE 3000
-CMD ["npm", "start"]
+CMD ["node", "dist/boot.js"]
