@@ -2,12 +2,16 @@
 
 Дигитално QR меню за ресторант **Djanam Steak & Fish** (Варна). Клиентите сканират QR код на масата и разглеждат менюто на телефона си; админ панел управлява маси, категории, продукти и аналитика.
 
-Това репозиторий съдържа **компилирания статичен фронтенд** (React SPA, build output), готов за качване в `/menu/` подпапка на хостинга.
+## Структура на репозиторито
+
+- **Коренът** (`index.html`, `assets/`, `config.js`, …) — **компилираният production build**, готов за качване в `/menu/` подпапка на хостинга.
+- **`app/`** — **пълният сорс код** на проекта: React фронтенд (`src/`), backend API (`api/` — Hono + tRPC + Drizzle), база данни (`db/`) и цялото меню като seed данни (`api/seedRouter.ts` — ~190 продукта в 20 категории).
+- **`menu-photos/`** — оригинални снимки на хартиеното меню на ресторанта (референция за артикули и цени).
 
 ## Архитектура
 
-- **Frontend:** React + TypeScript + Vite + Tailwind + shadcn/ui, HashRouter. Компилиран в `index.html` + `assets/`.
-- **Backend:** Node.js + Hono + tRPC + Drizzle ORM, пакетиран като самодостатъчен `boot.js` (без `node_modules`). Хоства се на **Railway** (препоръчано) или cPanel Node.js App. *Backend-ът не е в това репо.*
+- **Frontend:** React + TypeScript + Vite + Tailwind + shadcn/ui, HashRouter. Сорс в `app/src/`, компилиран в корена (`index.html` + `assets/`).
+- **Backend:** Node.js + Hono + tRPC + Drizzle ORM (сорс в `app/api/`), пакетира се като самодостатъчен `boot.js` (без `node_modules`). Хоства се на **Railway** (препоръчано) или cPanel Node.js App.
 - **База данни:** MySQL 8+ (`DATABASE_URL` env в Railway). Таблици: `tables`, `categories`, `products`, `orders`, `orderItems`.
 - **Хостинг на фронтенда:** споделен cPanel хостинг (SuperHosting), файловете стоят в `public_html/menu/`.
 
