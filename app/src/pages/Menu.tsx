@@ -1,21 +1,28 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useParams } from "react-router";
 import { trpc } from "@/providers/trpc";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import {
   Search,
   X,
-  ChevronLeft,
-  ChevronRight,
   Bell,
-  Sun,
-  Moon,
   Instagram,
+  Globe,
+  Salad,
+  Sandwich,
+  Croissant,
+  UtensilsCrossed,
+  Beef,
+  Drumstick,
+  Bird,
+  Fish,
+  CakeSlice,
+  Wine,
+  Martini,
+  GlassWater,
+  CupSoda,
+  Citrus,
+  Coffee,
+  type LucideIcon,
 } from "lucide-react";
 
 type ProductItem = {
@@ -34,44 +41,186 @@ type ProductItem = {
   sortOrder: number;
 };
 
-const categoryEmoji: Record<string, string> = {
-  Salads: "🥗",
-  Soups: "🍲",
-  Starters: "🍤",
-  Appetizer: "🫒",
-  Bread: "🥖",
-  "Pasta & Risotto": "🍝",
-  Beef: "🥩",
-  Fish: "🐟",
-  Sides: "🍟",
-  Desserts: "🍰",
+type Lang = "bg" | "en";
+
+/* ─── Category presentation ─── */
+const categoryIcon: Record<string, LucideIcon> = {
+  Salads: Salad,
+  Appetizer: Sandwich,
+  Bread: Croissant,
+  Starters: UtensilsCrossed,
+  Beef: Beef,
+  Lamb: Drumstick,
+  Poultry: Bird,
+  Fish: Fish,
+  Desserts: CakeSlice,
+  Whiskey: Wine,
+  "Gin & Rum": Martini,
+  Vodka: GlassWater,
+  "Anise Drinks": GlassWater,
+  Rakia: Wine,
+  Liquors: Martini,
+  Tequila: Citrus,
+  Beer: Wine,
+  "Soft Drinks": CupSoda,
+  "Fresh Juices": Citrus,
+  "Hot Drinks": Coffee,
 };
 
-const categorySubtitle: Record<string, string> = {
-  Salads: "Свежи и вкусни",
-  Soups: "Топли и ароматни",
+const categorySubtitleBg: Record<string, string> = {
+  Salads: "Свежи комбинации",
+  Appetizer: "Перфектно начало",
+  Bread: "Пресен и топъл",
   Starters: "Започнете със стил",
-  Appetizer: "Перфектно допълнение",
-  Bread: "Прежен и топъл",
-  "Pasta & Risotto": "Италианска класика",
-  Beef: "Black Angus Selection",
+  Beef: "Black Angus селекция",
+  Lamb: "Нежно и ароматно",
+  Poultry: "Внимателно подбрано",
   Fish: "Прясно уловена",
-  Sides: "Идеално допълнение",
   Desserts: "Сладък финал",
+  Whiskey: "Отлежала селекция",
+  "Gin & Rum": "Класика и новост",
+  Vodka: "Премиум марки",
+  "Anise Drinks": "Медитерански класики",
+  Rakia: "Българска традиция",
+  Liquors: "Сладки и ароматни",
+  Tequila: "100% агаве",
+  Beer: "Точно охладена",
+  "Soft Drinks": "Освежаващи",
+  "Fresh Juices": "Прясно изцедени",
+  "Hot Drinks": "Кафе и чай",
 };
+
+const categorySubtitleEn: Record<string, string> = {
+  Salads: "Fresh combinations",
+  Appetizer: "The perfect start",
+  Bread: "Fresh & warm",
+  Starters: "Begin in style",
+  Beef: "Black Angus selection",
+  Lamb: "Tender & aromatic",
+  Poultry: "Carefully sourced",
+  Fish: "Freshly caught",
+  Desserts: "A sweet finale",
+  Whiskey: "Aged selection",
+  "Gin & Rum": "Classics & new",
+  Vodka: "Premium labels",
+  "Anise Drinks": "Mediterranean classics",
+  Rakia: "Bulgarian tradition",
+  Liquors: "Sweet & aromatic",
+  Tequila: "100% agave",
+  Beer: "Perfectly chilled",
+  "Soft Drinks": "Refreshing",
+  "Fresh Juices": "Freshly squeezed",
+  "Hot Drinks": "Coffee & tea",
+};
+
+/* ─── UI strings ─── */
+const t = {
+  bg: {
+    tagline: "Стейк & риба · Варна",
+    heroSub: "Всеки детайл за Вашето удоволствие",
+    scroll: "Разгледайте менюто",
+    explore: "Меню",
+    search: "Търсене в менюто…",
+    searchResults: "резултата",
+    noResults: "Нищо не е намерено. Опитайте с друга дума.",
+    items: "артикула",
+    all: "Всички",
+    callWaiter: "Извикай сервитьор",
+    waiterCalled: "Сервитьорът беше извикан! Моля, изчакайте.",
+    table: "Маса",
+    scanPrompt: "Моля, сканирайте QR кода на Вашата маса, за да разгледате менюто.",
+    invalidQr: "Невалиден QR код",
+    invalidQrSub: "Тази маса не съществува в системата. Моля, сканирайте валиден QR код.",
+    shareNight: "Споделете вечерта",
+    stayLoop: "Последвайте ни",
+    tagUs: "Отбележете ни в сторито си — може да получите изненада",
+    weight: "Грамаж",
+    menu: "Меню",
+  },
+  en: {
+    tagline: "Steak & Fish · Varna",
+    heroSub: "Every detail for your pleasure",
+    scroll: "Explore the menu",
+    explore: "Menu",
+    search: "Search the menu…",
+    searchResults: "results",
+    noResults: "Nothing found. Try another word.",
+    items: "items",
+    all: "All",
+    callWaiter: "Call the waiter",
+    waiterCalled: "The waiter has been called! Please wait.",
+    table: "Table",
+    scanPrompt: "Please scan the QR code on your table to view the menu.",
+    invalidQr: "Invalid QR code",
+    invalidQrSub: "This table does not exist. Please scan a valid QR code.",
+    shareNight: "Share the night",
+    stayLoop: "Stay in the loop",
+    tagUs: "Tag us in your story — you might get a surprise",
+    weight: "Weight",
+    menu: "Menu",
+  },
+} as const;
 
 const GOLD = "#D4A853";
 const GOLD_LIGHT = "#E8C97A";
 
+/* ─── Helpers ─── */
+function splitCatName(full: string): { bg: string; en: string } {
+  const parts = full.split(" / ");
+  return { bg: parts[0], en: parts[1] || parts[0] };
+}
+
+/* ─── Scroll reveal wrapper ─── */
+function Reveal({ children, className = "", delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          el.classList.add("is-visible");
+          obs.disconnect();
+        }
+      },
+      { threshold: 0.08 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+  return (
+    <div ref={ref} className={`reveal ${className}`} style={delay ? { transitionDelay: `${delay}ms` } : undefined}>
+      {children}
+    </div>
+  );
+}
+
 export default function Menu() {
   const { qrToken } = useParams<{ qrToken: string }>();
+  const [lang, setLang] = useState<Lang>(() => {
+    try {
+      return (localStorage.getItem("djanam-lang") as Lang) || "bg";
+    } catch {
+      return "bg";
+    }
+  });
   const [activeCategory, setActiveCategory] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedProduct, setSelectedProduct] = useState<ProductItem | null>(null);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [waiterCalled, setWaiterCalled] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const s = t[lang];
+
+  const toggleLang = useCallback(() => {
+    setLang((prev) => {
+      const next = prev === "bg" ? "en" : "bg";
+      try {
+        localStorage.setItem("djanam-lang", next);
+      } catch {}
+      return next;
+    });
+  }, []);
 
   const { data: table, isLoading: tableLoading } = trpc.table.byQrToken.useQuery(
     { qrToken: qrToken || "" },
@@ -84,21 +233,19 @@ export default function Menu() {
     if (qrToken && table) {
       visitMutation.mutate({ qrToken });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [qrToken, table]);
 
-  const { data: categories } = trpc.category.active.useQuery();
-  const { data: products } = trpc.product.active.useQuery();
+  const { data: categories, isLoading: catsLoading } = trpc.category.active.useQuery();
+  const { data: products, isLoading: prodsLoading } = trpc.product.active.useQuery();
 
-  const handleCallWaiter = () => {
+  const handleCallWaiter = useCallback(() => {
     setWaiterCalled(true);
     setTimeout(() => setWaiterCalled(false), 4000);
-  };
+  }, []);
 
   const filteredProducts = useMemo(() => {
     let list = (products as ProductItem[]) || [];
-    if (activeCategory) {
-      list = list.filter((p) => p.categoryId === activeCategory);
-    }
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       list = list.filter(
@@ -109,7 +256,7 @@ export default function Menu() {
       );
     }
     return list;
-  }, [products, activeCategory, searchQuery]);
+  }, [products, searchQuery]);
 
   const productsByCategory = useMemo(() => {
     const grouped: Record<number, ProductItem[]> = {};
@@ -120,525 +267,456 @@ export default function Menu() {
     return grouped;
   }, [filteredProducts]);
 
-  const categoryOrder = categories
-    ?.filter((c) => productsByCategory[c.id]?.length > 0)
-    .sort((a, b) => a.sortOrder - b.sortOrder);
+  const categoryOrder = useMemo(
+    () =>
+      categories
+        ?.filter((c) => productsByCategory[c.id]?.length > 0)
+        .sort((a, b) => a.sortOrder - b.sortOrder),
+    [categories, productsByCategory]
+  );
 
-  // Auto-rotate product images slideshow
+  /* Scrollspy — highlight the category currently in view */
   useEffect(() => {
-    if (!selectedProduct) return;
-    const allImages = getProductImages(selectedProduct);
-    if (allImages.length <= 1) return;
-
-    const interval = setInterval(() => {
-      setCurrentImageIndex((prev) => (prev + 1) % allImages.length);
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [selectedProduct]);
-
-  const getProductImages = (product: ProductItem) => {
-    const imgs: string[] = [];
-    if (product.images && Array.isArray(product.images) && product.images.length > 0) {
-      imgs.push(...product.images);
-    } else if (product.image) {
-      imgs.push(product.image);
-    }
-    return imgs;
-  };
-
-  const openProductDetail = (product: ProductItem) => {
-    setSelectedProduct(product);
-    setCurrentImageIndex(0);
-  };
-
-  const closeProductDetail = () => {
-    setSelectedProduct(null);
-  };
-
-  const nextImage = () => {
-    if (!selectedProduct) return;
-    const imgs = getProductImages(selectedProduct);
-    setCurrentImageIndex((prev) => (prev + 1) % imgs.length);
-  };
-
-  const prevImage = () => {
-    if (!selectedProduct) return;
-    const imgs = getProductImages(selectedProduct);
-    setCurrentImageIndex((prev) => (prev - 1 + imgs.length) % imgs.length);
-  };
+    if (!categoryOrder?.length) return;
+    const sections = categoryOrder
+      .map((c) => document.getElementById(`cat-section-${c.id}`))
+      .filter(Boolean) as HTMLElement[];
+    const obs = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            const id = Number(e.target.id.replace("cat-section-", ""));
+            setActiveCategory(id);
+          }
+        }
+      },
+      { rootMargin: "-20% 0px -65% 0px" }
+    );
+    sections.forEach((el) => obs.observe(el));
+    return () => obs.disconnect();
+  }, [categoryOrder]);
 
   const scrollToCategory = (catId: number) => {
-    setActiveCategory(catId);
     const el = document.getElementById(`cat-section-${catId}`);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
+  const productName = (p: ProductItem) => (lang === "en" ? p.nameEn || p.name : p.name);
+
+  const searchResults = searchQuery.trim() ? filteredProducts : [];
+
+  /* ─── Landing (no QR) ─── */
   if (!qrToken) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
-        <div className="max-w-md w-full text-center space-y-6">
+      <div className="min-h-screen bg-[#050505] text-white flex items-center justify-center p-6">
+        <div className="max-w-md w-full text-center space-y-8">
           <div className="w-20 h-20 mx-auto">
             <img src="./bull-icon.png" alt="Djanam" className="w-full h-full object-contain" />
           </div>
-          <h1 className="text-4xl font-light tracking-widest uppercase">Djanam</h1>
-          <p className="text-gray-500">
-            Моля, сканирайте QR кода на Вашата маса, за да разгледате менюто.
-          </p>
+          <div>
+            <h1 className="font-display text-5xl tracking-wide">Djanam</h1>
+            <p className="mt-2 text-[11px] tracking-[0.35em] uppercase text-neutral-500">Steak & Fish</p>
+          </div>
+          <div className="h-px w-16 mx-auto" style={{ backgroundColor: `${GOLD}60` }} />
+          <p className="text-neutral-400 leading-relaxed">{s.scanPrompt}</p>
         </div>
       </div>
     );
   }
 
+  /* ─── Loading ─── */
   if (tableLoading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: GOLD }} />
+      <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center gap-6 p-6">
+        <div className="skeleton w-20 h-20 rounded-full" />
+        <div className="skeleton h-8 w-48 rounded-lg" />
+        <div className="skeleton h-4 w-32 rounded" />
       </div>
     );
   }
 
   if (!table) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
-        <div className="max-w-md w-full text-center">
-          <h1 className="text-xl mb-2" style={{ color: GOLD }}>Невалиден QR код</h1>
-          <p className="text-gray-500">
-            Тази маса не съществува в системата. Моля, сканирайте валиден QR код.
-          </p>
+      <div className="min-h-screen bg-[#050505] text-white flex items-center justify-center p-6">
+        <div className="max-w-md w-full text-center space-y-4">
+          <h1 className="font-display text-2xl" style={{ color: GOLD }}>{s.invalidQr}</h1>
+          <p className="text-neutral-500">{s.invalidQrSub}</p>
         </div>
       </div>
     );
   }
 
-  const detailImages = selectedProduct ? getProductImages(selectedProduct) : [];
+  const dataLoading = catsLoading || prodsLoading;
 
   return (
-    <div className="min-h-screen bg-black text-white overflow-x-hidden">
-      {/* ─── Transparent Minimal Header ─── */}
-      <header className="fixed top-0 left-0 right-0 z-50 px-5 py-4 flex items-center justify-between">
+    <div className="min-h-screen bg-[#050505] text-[#f5f2ec] overflow-x-hidden">
+      {/* ─── Header ─── */}
+      <header className="fixed top-0 left-0 right-0 z-50 px-5 py-4 flex items-center justify-between bg-gradient-to-b from-black/80 to-transparent">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10">
+          <div className="w-9 h-9">
             <img src="./bull-icon.png" alt="Djanam" className="w-full h-full object-contain" />
           </div>
-          <span className="text-sm font-medium tracking-wider uppercase">Djanam</span>
+          <span className="font-display text-base tracking-wide">Djanam</span>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={toggleLang}
+            aria-label="Switch language"
+            className="h-9 px-3 rounded-full bg-white/[0.07] backdrop-blur flex items-center gap-1.5 hover:bg-white/[0.14] transition-colors cursor-pointer"
+          >
+            <Globe className="w-3.5 h-3.5 text-neutral-400" />
+            <span className="text-[11px] font-medium tracking-wider uppercase">{lang === "bg" ? "EN" : "BG"}</span>
+          </button>
           <button
             onClick={() => setShowSearch(!showSearch)}
-            className="w-9 h-9 rounded-full bg-white/10 backdrop-blur flex items-center justify-center hover:bg-white/20 transition-colors"
+            aria-label={s.search}
+            className="w-9 h-9 rounded-full bg-white/[0.07] backdrop-blur flex items-center justify-center hover:bg-white/[0.14] transition-colors cursor-pointer"
           >
             <Search className="w-4 h-4" />
           </button>
-          <button
-            onClick={handleCallWaiter}
-            className="w-9 h-9 rounded-full flex items-center justify-center transition-colors"
-            style={{ backgroundColor: `${GOLD}20` }}
-          >
-            <Bell className="w-4 h-4" style={{ color: GOLD }} />
-          </button>
-          <span className="text-xs text-gray-400 bg-white/5 backdrop-blur px-3 py-1.5 rounded-full">
-            Table {table.name.replace(/\D/g, "") || table.name}
+          <span className="text-[11px] text-neutral-300 bg-white/[0.07] backdrop-blur px-3 py-2 rounded-full tracking-wide">
+            {s.table} {table.name.replace(/\D/g, "") || table.name}
           </span>
         </div>
       </header>
 
-      {/* ─── Hero Section ─── */}
-      <section className="relative w-full h-[70vh] min-h-[500px]">
-        {/* Hero background — gradient or image placeholder */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/60 to-black">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(212,168,83,0.08)_0%,_transparent_70%)]" />
-        </div>
-
-        {/* Decorative glow */}
+      {/* ─── Hero ─── */}
+      <section className="relative w-full h-[72vh] min-h-[520px] flex items-center justify-center">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(212,168,83,0.07)_0%,_transparent_65%)]" />
         <div
-          className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full blur-[120px] opacity-20"
+          className="animate-hero-glow absolute top-1/2 left-1/2 w-[26rem] h-[26rem] rounded-full blur-[130px]"
           style={{ backgroundColor: GOLD }}
         />
-
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
-          <p className="text-xs tracking-[0.3em] uppercase text-gray-400 mb-4">
-            Steak & Fish Restaurant
-          </p>
-          <div className="w-24 h-24 mb-6">
-            <img src="./bull-icon.png" alt="Djanam" className="w-full h-full object-contain" />
-          </div>
-          <h1 className="text-5xl md:text-7xl font-light tracking-wider uppercase mb-3">
-            Djanam
-          </h1>
-          <p className="text-sm text-gray-400 max-w-xs mx-auto leading-relaxed">
-            Every Detail for Your Pleasure
-          </p>
+        <div className="relative text-center px-6">
+          <Reveal>
+            <div className="w-20 h-20 mx-auto mb-7">
+              <img src="./bull-icon.png" alt="Djanam" className="w-full h-full object-contain" />
+            </div>
+          </Reveal>
+          <Reveal delay={120}>
+            <p className="text-[11px] tracking-[0.4em] uppercase mb-5" style={{ color: GOLD }}>
+              {s.tagline}
+            </p>
+          </Reveal>
+          <Reveal delay={220}>
+            <h1 className="font-display text-6xl md:text-8xl tracking-wide leading-none">Djanam</h1>
+          </Reveal>
+          <Reveal delay={340}>
+            <p className="mt-5 text-sm text-neutral-400 tracking-wide font-light">{s.heroSub}</p>
+          </Reveal>
         </div>
-
-        {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
-          <span className="text-[10px] tracking-[0.2em] uppercase text-gray-500">Scroll to explore</span>
-          <div className="w-px h-8 bg-gradient-to-b from-gray-500 to-transparent" />
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3">
+          <span className="text-[10px] tracking-[0.3em] uppercase text-neutral-500">{s.scroll}</span>
+          <div className="w-px h-10 bg-gradient-to-b from-neutral-500 to-transparent" />
         </div>
       </section>
 
-      {/* ─── Waiter Notification ─── */}
+      {/* ─── Waiter toast ─── */}
       {waiterCalled && (
-        <div className="fixed top-20 left-4 right-4 z-50 mx-auto max-w-sm">
+        <div className="animate-fade-in fixed top-20 left-4 right-4 z-50 mx-auto max-w-sm">
           <div
-            className="rounded-2xl px-5 py-4 flex items-center gap-3 text-sm backdrop-blur-md border"
-            style={{ backgroundColor: `${GOLD}15`, borderColor: `${GOLD}40`, color: GOLD_LIGHT }}
+            className="rounded-2xl px-5 py-4 flex items-center gap-3 text-sm backdrop-blur-md border shadow-2xl"
+            style={{ backgroundColor: `${GOLD}18`, borderColor: `${GOLD}45`, color: GOLD_LIGHT }}
           >
             <Bell className="w-5 h-5 shrink-0" style={{ color: GOLD }} />
-            <span>Сервитьорът беше извикан! Моля, изчакайте.</span>
+            <span>{s.waiterCalled}</span>
           </div>
         </div>
       )}
 
-      {/* ─── Search Overlay ─── */}
+      {/* ─── Search overlay ─── */}
       {showSearch && (
-        <div className="fixed top-16 left-0 right-0 z-40 px-4">
-          <div className="max-w-md mx-auto relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-            <Input
-              autoFocus
-              placeholder="Търсене в менюто..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-11 pr-10 bg-[#111]/90 backdrop-blur-xl border-[#333] text-white placeholder:text-gray-600 h-12 rounded-2xl focus-visible:ring-1 focus-visible:ring-offset-0"
-              style={{ focusVisibleRingColor: GOLD }}
-            />
-            {searchQuery && (
+        <div className="animate-fade-in fixed inset-0 z-50 bg-black/85 backdrop-blur-md" onClick={() => setShowSearch(false)}>
+          <div className="max-w-lg mx-auto px-5 pt-24" onClick={(e) => e.stopPropagation()}>
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500" />
+              <input
+                autoFocus
+                placeholder={s.search}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-11 pr-11 py-3.5 bg-[#111] border border-[#2a2a2a] rounded-2xl text-white placeholder:text-neutral-600 focus:outline-none focus:border-[#D4A853]/50 text-base"
+              />
               <button
                 onClick={() => { setSearchQuery(""); setShowSearch(false); }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-white/10 flex items-center justify-center"
+                aria-label="Close search"
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors cursor-pointer"
               >
-                <X className="w-3 h-3" />
+                <X className="w-3.5 h-3.5" />
               </button>
+            </div>
+
+            {searchQuery.trim() && (
+              <div className="mt-4 max-h-[55vh] overflow-y-auto rounded-2xl border border-[#1f1f1f] bg-[#0b0b0b] divide-y divide-[#161616]">
+                {searchResults.length === 0 && (
+                  <p className="p-5 text-sm text-neutral-500">{s.noResults}</p>
+                )}
+                {searchResults.map((p) => (
+                  <button
+                    key={p.id}
+                    onClick={() => { setSelectedProduct(p); setShowSearch(false); }}
+                    className="w-full text-left px-5 py-3.5 flex items-center justify-between gap-4 hover:bg-white/[0.04] transition-colors cursor-pointer"
+                  >
+                    <div className="min-w-0">
+                      <p className="font-display text-[15px] truncate">{productName(p)}</p>
+                      {p.description && (
+                        <p className="text-xs text-neutral-500 truncate mt-0.5">{p.description}</p>
+                      )}
+                    </div>
+                    <span className="shrink-0 font-display text-lg" style={{ color: GOLD }}>
+                      {Number(p.priceEur).toFixed(2)}€
+                    </span>
+                  </button>
+                ))}
+              </div>
             )}
           </div>
         </div>
       )}
 
-      {/* ─── EXPLORE MENU Section Label ─── */}
-      <section className="px-5 pt-8 pb-4">
-        <div className="flex items-center gap-4">
-          <h2 className="text-xs tracking-[0.25em] uppercase text-gray-400 font-medium">
-            Explore Menu
-          </h2>
-          <div className="flex-1 h-px bg-gradient-to-r from-[#333] to-transparent" />
-        </div>
-      </section>
+      {/* ─── Menu sections ─── */}
+      <main className="max-w-2xl mx-auto px-5 pb-44">
+        <Reveal className="pt-4 pb-2">
+          <div className="flex items-center gap-4">
+            <h2 className="text-[11px] tracking-[0.35em] uppercase font-medium" style={{ color: GOLD }}>
+              {s.explore}
+            </h2>
+            <div className="flex-1 h-px bg-gradient-to-r from-[#2a2a2a] to-transparent" />
+          </div>
+        </Reveal>
 
-      {/* ─── Horizontal Scrolling Products by Category ─── */}
-      <div className="space-y-10 pb-32">
+        {dataLoading &&
+          Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="py-8 space-y-4">
+              <div className="skeleton h-6 w-40 rounded" />
+              <div className="skeleton h-4 w-full rounded" />
+              <div className="skeleton h-4 w-3/4 rounded" />
+              <div className="skeleton h-4 w-5/6 rounded" />
+            </div>
+          ))}
+
         {categoryOrder?.map((cat) => {
           const catProducts = productsByCategory[cat.id] || [];
-          const catNameEn = cat.name.split(" / ")[1] || cat.name.split(" / ")[0];
-          const emoji = categoryEmoji[catNameEn] || "🍽️";
-          const subtitle = categorySubtitle[catNameEn] || "";
+          const names = splitCatName(cat.name);
+          const Icon = categoryIcon[names.en] || UtensilsCrossed;
+          const subtitle = (lang === "en" ? categorySubtitleEn : categorySubtitleBg)[names.en] || "";
 
           return (
-            <section key={cat.id} id={`cat-section-${cat.id}`} className="scroll-mt-20">
-              {/* Category title */}
-              <div className="px-5 mb-4 flex items-end justify-between">
-                <div>
-                  <span className="text-2xl mr-2">{emoji}</span>
-                  <span className="text-lg font-light">{cat.name.split(" / ")[0]}</span>
-                  {subtitle && (
-                    <p className="text-xs text-gray-600 mt-0.5 ml-8">{subtitle}</p>
-                  )}
-                </div>
-                <span className="text-xs text-gray-600">{catProducts.length} items</span>
-              </div>
-
-              {/* Horizontal scroll cards */}
-              <div
-                ref={scrollRef}
-                className="flex gap-4 overflow-x-auto px-5 pb-4 snap-x snap-mandatory scrollbar-hide"
-                style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-              >
-                {catProducts.map((product) => {
-                  const imgs = getProductImages(product);
-                  return (
-                    <div
-                      key={product.id}
-                      onClick={() => openProductDetail(product)}
-                      className="snap-start shrink-0 w-[280px] h-[380px] rounded-3xl overflow-hidden relative cursor-pointer group"
+            <section key={cat.id} id={`cat-section-${cat.id}`} className="scroll-mt-24 pt-10">
+              <Reveal>
+                <div className="flex items-end justify-between mb-1">
+                  <div className="flex items-center gap-3.5">
+                    <span
+                      className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 border"
+                      style={{ backgroundColor: `${GOLD}12`, borderColor: `${GOLD}30` }}
                     >
-                      {/* Image */}
-                      {imgs.length > 0 ? (
-                        <img
-                          src={imgs[0]}
-                          alt={product.name}
-                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                        />
-                      ) : (
-                        <div className="absolute inset-0 bg-[#111] flex items-center justify-center">
-                          <img src="./bull-icon.png" alt="" className="w-16 h-16 object-contain opacity-10" />
-                        </div>
-                      )}
+                      <Icon className="w-[18px] h-[18px]" style={{ color: GOLD }} />
+                    </span>
+                    <div>
+                      <h3 className="font-display text-2xl leading-tight">
+                        {lang === "en" ? names.en : names.bg}
+                      </h3>
+                      {subtitle && <p className="text-[11px] text-neutral-500 mt-0.5 tracking-wide">{subtitle}</p>}
+                    </div>
+                  </div>
+                  <span className="text-[11px] text-neutral-600 tabular-nums">
+                    {catProducts.length} {s.items}
+                  </span>
+                </div>
+                <div className="h-px mt-4 mb-2" style={{ background: `linear-gradient(to right, ${GOLD}50, transparent)` }} />
+              </Reveal>
 
-                      {/* Gradient overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
-
-                      {/* Content overlay */}
-                      <div className="absolute bottom-0 left-0 right-0 p-5">
-                        {/* Weight badge */}
-                        {product.weight && (
-                          <span className="inline-block text-[10px] text-gray-400 bg-white/10 backdrop-blur px-2 py-0.5 rounded-full mb-2">
-                            {product.weight}
+              <div>
+                {catProducts.map((p, idx) => (
+                  <Reveal key={p.id} delay={Math.min(idx * 40, 200)}>
+                    <button
+                      onClick={() => setSelectedProduct(p)}
+                      className="w-full text-left py-4 group cursor-pointer border-b border-[#121212] last:border-0"
+                    >
+                      <div className="flex items-baseline justify-between gap-4">
+                        <h4 className="font-display text-[17px] leading-snug group-hover:text-[#E8C97A] transition-colors duration-300">
+                          {productName(p)}
+                        </h4>
+                        <div className="flex items-baseline gap-2 shrink-0">
+                          <span className="font-display text-lg tabular-nums" style={{ color: GOLD }}>
+                            {Number(p.priceEur).toFixed(2)}
+                            <span className="text-sm ml-0.5">€</span>
                           </span>
-                        )}
-
-                        {/* Title */}
-                        <h3 className="text-lg font-light leading-tight mb-1">
-                          {product.name}
-                        </h3>
-
-                        {/* Description */}
-                        {product.description && (
-                          <p className="text-xs text-gray-400 line-clamp-2 mb-3 leading-relaxed">
-                            {product.description}
-                          </p>
-                        )}
-
-                        {/* Price */}
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-2xl font-light" style={{ color: GOLD }}>
-                            {Number(product.priceEur).toFixed(0)}
-                          </span>
-                          <span className="text-sm" style={{ color: GOLD_LIGHT }}>€</span>
-                          <span className="text-xs text-gray-600 ml-2">
-                            {Number(product.priceBgn).toFixed(2)} лв.
+                          <span className="text-[11px] text-neutral-600 tabular-nums">
+                            {Number(p.priceBgn).toFixed(2)} лв.
                           </span>
                         </div>
                       </div>
-
-                      {/* Hover glow */}
-                      <div
-                        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-                        style={{
-                          background: `radial-gradient(circle at 50% 100%, ${GOLD}15 0%, transparent 60%)`,
-                        }}
-                      />
-                    </div>
-                  );
-                })}
+                      <div className="flex items-center gap-3 mt-1">
+                        {p.weight && (
+                          <span className="text-[10px] text-neutral-500 tracking-wide uppercase shrink-0">
+                            {p.weight}
+                          </span>
+                        )}
+                        {p.description && (
+                          <p className="text-xs text-neutral-500 line-clamp-2 leading-relaxed font-light">
+                            {p.description}
+                          </p>
+                        )}
+                      </div>
+                    </button>
+                  </Reveal>
+                ))}
               </div>
             </section>
           );
         })}
-      </div>
 
-      {/* ─── Instagram / Social Section ─── */}
-      <section className="px-5 py-12 border-t border-[#111]">
-        <div className="text-center space-y-6">
-          <div className="space-y-2">
-            <p className="text-xs tracking-[0.3em] uppercase text-gray-500">
-              Share the Night
-            </p>
-            <h3 className="text-2xl font-light">
-              Stay in the <span style={{ color: GOLD }}>Loop</span>
+        {/* ─── Instagram ─── */}
+        <Reveal className="mt-16">
+          <section className="text-center space-y-5 py-10 border-t border-[#141414]">
+            <p className="text-[10px] tracking-[0.35em] uppercase text-neutral-500">{s.shareNight}</p>
+            <h3 className="font-display text-3xl">
+              {s.stayLoop}
             </h3>
+            <a
+              href="https://instagram.com/djanam.restaurant"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2.5 text-sm text-neutral-400 hover:text-white transition-colors cursor-pointer"
+            >
+              <Instagram className="w-4 h-4" style={{ color: GOLD }} />
+              @djanam.restaurant
+            </a>
+            <p className="text-xs text-neutral-600 max-w-xs mx-auto">{s.tagUs}</p>
+          </section>
+        </Reveal>
+
+        <footer className="pt-6 pb-2 text-center border-t border-[#141414]">
+          <div className="w-8 h-8 mx-auto mb-3 opacity-30">
+            <img src="./bull-icon.png" alt="" className="w-full h-full object-contain" />
           </div>
+          <p className="text-[10px] text-neutral-700 tracking-[0.25em] uppercase">Djanam Steak & Fish</p>
+        </footer>
+      </main>
 
-          {/* Instagram handle */}
-          <a
-            href="https://instagram.com/djanam.restaurant"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors"
-          >
-            <Instagram className="w-4 h-4" style={{ color: GOLD }} />
-            @djanam.restaurant
-          </a>
-
-          {/* Tagline */}
-          <p className="text-xs text-gray-600 max-w-xs mx-auto">
-            Tag us in your story — you might get a surprise
-          </p>
-        </div>
-      </section>
-
-      {/* ─── Footer ─── */}
-      <footer className="px-5 py-8 text-center border-t border-[#111]">
-        <div className="w-8 h-8 mx-auto mb-3 opacity-30">
-          <img src="./bull-icon.png" alt="" className="w-full h-full object-contain" />
-        </div>
-        <p className="text-[10px] text-gray-700 tracking-wider uppercase">
-          Djanam Steak & Fish
-        </p>
-      </footer>
-
-      {/* ─── Bottom Fixed Category Navigation ─── */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-gradient-to-t from-black via-black to-transparent pt-8 pb-4 px-2">
-        <div className="flex gap-2 overflow-x-auto px-3 pb-2 scrollbar-hide" style={{ scrollbarWidth: "none" }}>
-          <button
-            onClick={() => setActiveCategory(null)}
-            className={`shrink-0 px-4 py-2.5 rounded-2xl text-xs transition-all duration-300 border ${
-              activeCategory === null
-                ? "bg-white text-black border-white font-medium"
-                : "bg-white/5 text-gray-400 border-white/10 hover:bg-white/10 hover:text-white"
-            }`}
-          >
-            <span className="block text-center">🍽️</span>
-            <span className="block mt-0.5">Всички</span>
-          </button>
-
-          {categories?.map((cat) => {
-            const catNameEn = cat.name.split(" / ")[1] || cat.name.split(" / ")[0];
-            const emoji = categoryEmoji[catNameEn] || "🍽️";
-            const subtitle = categorySubtitle[catNameEn] || "";
+      {/* ─── Bottom category nav ─── */}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-gradient-to-t from-black via-black/95 to-transparent pt-10 pb-4">
+        <div className="flex gap-2 overflow-x-auto px-4 pb-1 scrollbar-hide">
+          {categoryOrder?.map((cat) => {
+            const names = splitCatName(cat.name);
+            const Icon = categoryIcon[names.en] || UtensilsCrossed;
             const isActive = activeCategory === cat.id;
-
             return (
               <button
                 key={cat.id}
                 onClick={() => scrollToCategory(cat.id)}
-                className={`shrink-0 px-4 py-2.5 rounded-2xl text-xs transition-all duration-300 border text-left ${
+                aria-label={lang === "en" ? names.en : names.bg}
+                className={`shrink-0 flex items-center gap-2 px-4 h-11 rounded-2xl text-xs transition-all duration-300 border cursor-pointer ${
                   isActive
-                    ? "bg-white text-black border-white font-medium"
-                    : "bg-white/5 text-gray-400 border-white/10 hover:bg-white/10 hover:text-white"
+                    ? "text-black font-medium"
+                    : "bg-white/[0.05] text-neutral-400 border-white/10 hover:bg-white/10 hover:text-white"
                 }`}
+                style={isActive ? { backgroundColor: GOLD, borderColor: GOLD } : undefined}
               >
-                <span className="block">{emoji} {cat.name.split(" / ")[0]}</span>
-                {subtitle && (
-                  <span className={`block mt-0.5 text-[10px] ${isActive ? "text-gray-500" : "text-gray-600"}`}>
-                    {subtitle}
-                  </span>
-                )}
+                <Icon className="w-4 h-4" />
+                <span>{lang === "en" ? names.en : names.bg}</span>
               </button>
             );
           })}
         </div>
       </nav>
 
-      {/* ─── Floating Call Waiter Button ─── */}
+      {/* ─── Floating waiter button ─── */}
       <button
         onClick={handleCallWaiter}
-        className="fixed bottom-24 right-4 z-40 w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-110 active:scale-95"
+        aria-label={s.callWaiter}
+        className="fixed bottom-24 right-4 z-40 w-12 h-12 rounded-full flex items-center justify-center shadow-lg shadow-black/50 transition-transform hover:scale-110 active:scale-95 cursor-pointer"
         style={{ backgroundColor: GOLD }}
       >
         <Bell className="w-5 h-5 text-black" />
       </button>
 
-      {/* ─── Product Detail Dialog ─── */}
-      <Dialog open={!!selectedProduct} onOpenChange={closeProductDetail}>
-        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto bg-black border-[#222] text-white p-0 gap-0 rounded-3xl">
-          {selectedProduct && (
-            <>
-              {/* Image Gallery */}
-              <div className="relative w-full aspect-square bg-[#0a0a0a]">
-                {detailImages.length > 0 ? (
+      {/* ─── Product bottom sheet ─── */}
+      {selectedProduct && (
+        <div className="fixed inset-0 z-50" role="dialog" aria-modal="true">
+          <div
+            className="animate-fade-in absolute inset-0 bg-black/75 backdrop-blur-sm"
+            onClick={() => setSelectedProduct(null)}
+          />
+          <div className="animate-sheet-up absolute bottom-0 left-0 right-0 max-w-lg mx-auto max-h-[85vh] overflow-y-auto bg-[#0b0b0b] border-t border-[#262626] rounded-t-[2rem] pb-10">
+            {/* Handle */}
+            <div className="sticky top-0 pt-3 pb-2 bg-[#0b0b0b] flex justify-center rounded-t-[2rem]">
+              <div className="w-10 h-1 rounded-full bg-neutral-700" />
+            </div>
+            <button
+              onClick={() => setSelectedProduct(null)}
+              aria-label="Close"
+              className="absolute top-4 right-5 w-9 h-9 rounded-full bg-white/[0.07] flex items-center justify-center hover:bg-white/[0.14] transition-colors cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="px-7 pt-4 space-y-6">
+              {selectedProduct.image && (
+                <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden bg-[#111]">
                   <img
-                    src={detailImages[currentImageIndex]}
-                    alt={selectedProduct.name}
+                    src={selectedProduct.image}
+                    alt={productName(selectedProduct)}
                     className="w-full h-full object-cover"
                   />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <img src="./bull-icon.png" alt="" className="w-24 h-24 object-contain opacity-10" />
-                  </div>
-                )}
+                </div>
+              )}
 
-                {/* Close button */}
-                <button
-                  onClick={closeProductDetail}
-                  className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/60 backdrop-blur flex items-center justify-center hover:bg-black/80 transition-colors"
-                >
-                  <X className="w-5 h-5 text-white" />
-                </button>
-
-                {/* Navigation arrows */}
-                {detailImages.length > 1 && (
-                  <>
-                    <button
-                      onClick={prevImage}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/60 backdrop-blur flex items-center justify-center hover:bg-black/80 transition-colors"
-                    >
-                      <ChevronLeft className="w-5 h-5 text-white" />
-                    </button>
-                    <button
-                      onClick={nextImage}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/60 backdrop-blur flex items-center justify-center hover:bg-black/80 transition-colors"
-                    >
-                      <ChevronRight className="w-5 h-5 text-white" />
-                    </button>
-                    {/* Dots */}
-                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-                      {detailImages.map((_, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => setCurrentImageIndex(idx)}
-                          className={`w-2 h-2 rounded-full transition-colors ${
-                            idx === currentImageIndex ? "bg-white" : "bg-white/30"
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  </>
+              <div>
+                <span className="text-[10px] tracking-[0.25em] uppercase font-medium" style={{ color: GOLD }}>
+                  {selectedProduct.category?.name
+                    ? (lang === "en" ? splitCatName(selectedProduct.category.name).en : splitCatName(selectedProduct.category.name).bg)
+                    : s.menu}
+                </span>
+                <h2 className="font-display text-3xl leading-tight mt-2">{productName(selectedProduct)}</h2>
+                {lang === "bg" && selectedProduct.nameEn && selectedProduct.nameEn !== selectedProduct.name && (
+                  <p className="text-sm text-neutral-500 mt-1 font-light italic">{selectedProduct.nameEn}</p>
                 )}
               </div>
 
-              {/* Content */}
-              <div className="p-6 space-y-5">
-                {/* Category */}
-                <span
-                  className="text-[10px] tracking-[0.2em] uppercase font-medium"
-                  style={{ color: GOLD }}
-                >
-                  {selectedProduct.category?.name?.split(" / ")[0] || "МЕНЮ"}
-                </span>
+              {selectedProduct.description && (
+                <p className="text-sm text-neutral-400 leading-relaxed font-light">
+                  {selectedProduct.description}
+                </p>
+              )}
 
-                {/* Title */}
-                <h2 className="text-3xl font-light leading-tight">
-                  {selectedProduct.name}
-                </h2>
+              {selectedProduct.weight && (
+                <div className="flex items-center gap-2 text-xs text-neutral-500">
+                  <span className="uppercase tracking-wider">{s.weight}</span>
+                  <span className="text-neutral-300">{selectedProduct.weight}</span>
+                </div>
+              )}
 
-                {/* Description */}
-                {selectedProduct.description && (
-                  <p className="text-sm text-gray-400 leading-relaxed">
-                    {selectedProduct.description}
-                  </p>
-                )}
+              <div className="h-px bg-[#1c1c1c]" />
 
-                {/* Weight */}
-                {selectedProduct.weight && (
-                  <span className="inline-block text-xs text-gray-500 bg-white/5 px-3 py-1 rounded-full">
-                    {selectedProduct.weight}
-                  </span>
-                )}
-
-                {/* Divider */}
-                <div className="border-t border-[#222]" />
-
-                {/* Price */}
+              <div className="flex items-end justify-between">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-light" style={{ color: GOLD }}>
-                    {Number(selectedProduct.priceEur).toFixed(0)}
+                  <span className="font-display text-4xl tabular-nums" style={{ color: GOLD }}>
+                    {Number(selectedProduct.priceEur).toFixed(2)}
                   </span>
                   <span className="text-lg" style={{ color: GOLD_LIGHT }}>€</span>
-                  <span className="text-sm text-gray-600 ml-3">
-                    {Number(selectedProduct.priceBgn).toFixed(2)} лв.
-                  </span>
                 </div>
-
-                {/* Call Waiter CTA */}
-                <Button
-                  onClick={() => {
-                    handleCallWaiter();
-                    closeProductDetail();
-                  }}
-                  className="w-full text-black font-medium py-6 rounded-2xl text-base transition-transform hover:scale-[1.02] active:scale-[0.98]"
-                  style={{ backgroundColor: GOLD }}
-                >
-                  <Bell className="w-5 h-5 mr-2" />
-                  Извикай сервитьор
-                </Button>
+                <span className="text-sm text-neutral-500 tabular-nums">
+                  {Number(selectedProduct.priceBgn).toFixed(2)} лв.
+                </span>
               </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+
+              <button
+                onClick={() => {
+                  handleCallWaiter();
+                  setSelectedProduct(null);
+                }}
+                className="w-full flex items-center justify-center gap-2.5 text-black font-medium py-4 rounded-2xl text-[15px] transition-transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+                style={{ backgroundColor: GOLD }}
+              >
+                <Bell className="w-[18px] h-[18px]" />
+                {s.callWaiter}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

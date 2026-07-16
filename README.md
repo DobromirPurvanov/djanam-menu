@@ -7,6 +7,7 @@
 - **Коренът** (`index.html`, `assets/`, `config.js`, …) — **компилираният production build**, готов за качване в `/menu/` подпапка на хостинга.
 - **`app/`** — **пълният сорс код** на проекта: React фронтенд (`src/`), backend API (`api/` — Hono + tRPC + Drizzle), база данни (`db/`) и цялото меню като seed данни (`api/seedRouter.ts` — ~190 продукта в 20 категории).
 - **`menu-photos/`** — оригинални снимки на хартиеното меню на ресторанта (референция за артикули и цени).
+- **`app/tools/mock-server.mjs`** — локален mock API (`node tools/mock-server.mjs`), сервира seed менюто без MySQL — за преглед на фронтенда локално.
 
 ## Архитектура
 
