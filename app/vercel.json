@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm run build && mkdir -p dist/site && cp -R dist/public dist/site/menu",
+  "outputDirectory": "dist/site",
+  "rewrites": [
+    { "source": "/api/trpc/:path*", "destination": "https://backend-production-d1563.up.railway.app/api/trpc/:path*" },
+    { "source": "/menu/api/trpc/:path*", "destination": "https://backend-production-d1563.up.railway.app/api/trpc/:path*" },
+    { "source": "/", "destination": "/menu/" }
+  ]
+}
