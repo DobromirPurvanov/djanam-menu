@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useParams } from "react-router";
 import { trpc } from "@/providers/trpc";
+import { trNames, trDescriptions } from "@/i18n/tr";
 import {
   Search,
   X,
@@ -22,6 +23,7 @@ import {
   CupSoda,
   Citrus,
   Coffee,
+  Check,
   type LucideIcon,
 } from "lucide-react";
 
@@ -41,7 +43,7 @@ type ProductItem = {
   sortOrder: number;
 };
 
-type Lang = "bg" | "en";
+type Lang = "bg" | "en" | "tr";
 
 /* ─── Category presentation ─── */
 const categoryIcon: Record<string, LucideIcon> = {
@@ -113,6 +115,58 @@ const categorySubtitleEn: Record<string, string> = {
   "Hot Drinks": "Coffee & tea",
 };
 
+const categorySubtitleTr: Record<string, string> = {
+  Salads: "Taze kombinasyonlar",
+  Appetizer: "Mükemmel bir başlangıç",
+  Bread: "Taze ve sıcak",
+  Starters: "Tarz bir başlangıç",
+  Beef: "Black Angus seçkisi",
+  Lamb: "Yumuşak ve aromatik",
+  Poultry: "Özenle seçilmiş",
+  Fish: "Taze tutulmuş",
+  Desserts: "Tatlı bir final",
+  Whiskey: "Yıllanmış seçki",
+  "Gin & Rum": "Klasikler ve yeniler",
+  Vodka: "Premium markalar",
+  "Anise Drinks": "Akdeniz klasikleri",
+  Rakia: "Balkan geleneği",
+  Liquors: "Tatlı ve aromatik",
+  Tequila: "%100 agave",
+  Beer: "Buz gibi",
+  "Soft Drinks": "Serinletici",
+  "Fresh Juices": "Taze sıkılmış",
+  "Hot Drinks": "Kahve ve çay",
+};
+
+const categoryNameTr: Record<string, string> = {
+  Salads: "Salatalar",
+  Appetizer: "Mezeler",
+  Bread: "Ekmek",
+  Starters: "Başlangıçlar",
+  Beef: "Dana Eti",
+  Lamb: "Kuzu Eti",
+  Poultry: "Kümes Hayvanları",
+  Fish: "Balık",
+  Desserts: "Tatlılar",
+  Whiskey: "Viski",
+  "Gin & Rum": "Cin & Rom",
+  Vodka: "Votka",
+  "Anise Drinks": "Anason İçkileri",
+  Rakia: "Rakı",
+  Liquors: "Likörler",
+  Tequila: "Tekila",
+  Beer: "Bira",
+  "Soft Drinks": "Alkolsüz İçecekler",
+  "Fresh Juices": "Taze Sıkma",
+  "Hot Drinks": "Sıcak İçecekler",
+};
+
+const categorySubtitle: Record<Lang, Record<string, string>> = {
+  bg: categorySubtitleBg,
+  en: categorySubtitleEn,
+  tr: categorySubtitleTr,
+};
+
 /* ─── UI strings ─── */
 const t = {
   bg: {
@@ -159,6 +213,28 @@ const t = {
     weight: "Weight",
     menu: "Menu",
   },
+  tr: {
+    tagline: "Biftek & Balık · Varna",
+    heroSub: "Keyfiniz için her detay",
+    scroll: "Menüyü keşfedin",
+    explore: "Menü",
+    search: "Menüde ara…",
+    searchResults: "sonuç",
+    noResults: "Sonuç bulunamadı. Başka bir kelime deneyin.",
+    items: "ürün",
+    all: "Tümü",
+    callWaiter: "Garsonu çağır",
+    waiterCalled: "Garson çağrıldı! Lütfen bekleyin.",
+    table: "Masa",
+    scanPrompt: "Menüyü görüntülemek için lütfen masanızdaki QR kodu okutun.",
+    invalidQr: "Geçersiz QR kod",
+    invalidQrSub: "Bu masa sistemde mevcut değil. Lütfen geçerli bir QR kod okutun.",
+    shareNight: "Geceyi paylaşın",
+    stayLoop: "Bizi takip edin",
+    tagUs: "Hikayenizde bizi etiketleyin — sürpriz kazanabilirsiniz",
+    weight: "Gramaj",
+    menu: "Menü",
+  },
 } as const;
 
 const GOLD = "#D4A853";
@@ -199,7 +275,8 @@ export default function Menu() {
   const { qrToken } = useParams<{ qrToken: string }>();
   const [lang, setLang] = useState<Lang>(() => {
     try {
-      return (localStorage.getItem("djanam-lang") as Lang) || "bg";
+      const saved = localStorage.getItem("djanam-lang");
+      return saved === "en" || saved === "tr" ? saved : "bg";
     } catch {
       return "bg";
     }
@@ -209,17 +286,16 @@ export default function Menu() {
   const [selectedProduct, setSelectedProduct] = useState<ProductItem | null>(null);
   const [waiterCalled, setWaiterCalled] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [showLangMenu, setShowLangMenu] = useState(false);
 
   const s = t[lang];
 
-  const toggleLang = useCallback(() => {
-    setLang((prev) => {
-      const next = prev === "bg" ? "en" : "bg";
-      try {
-        localStorage.setItem("djanam-lang", next);
-      } catch {}
-      return next;
-    });
+  const changeLang = useCallback((next: Lang) => {
+    setLang(next);
+    setShowLangMenu(false);
+    try {
+      localStorage.setItem("djanam-lang", next);
+    } catch {}
   }, []);
 
   const { data: table, isLoading: tableLoading } = trpc.table.byQrToken.useQuery(
@@ -301,7 +377,23 @@ export default function Menu() {
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  const productName = (p: ProductItem) => (lang === "en" ? p.nameEn || p.name : p.name);
+  const productName = (p: ProductItem) =>
+    lang === "tr" ? trNames[p.name] || p.nameEn || p.name : lang === "en" ? p.nameEn || p.name : p.name;
+
+  const productDesc = (p: ProductItem): string | null => {
+    if (!p.description) return null;
+    const parts = p.description.split(" / ");
+    const bg = parts[0];
+    const en = parts.length > 1 ? parts.slice(1).join(" / ") : null;
+    if (lang === "bg") return bg;
+    if (lang === "en") return en ?? bg;
+    return trDescriptions[p.name] ?? en ?? bg;
+  };
+
+  const catName = (full: string) => {
+    const names = splitCatName(full);
+    return lang === "tr" ? categoryNameTr[names.en] || names.en : lang === "en" ? names.en : names.bg;
+  };
 
   const searchResults = searchQuery.trim() ? filteredProducts : [];
 
@@ -359,14 +451,40 @@ export default function Menu() {
           <span className="font-display text-base tracking-wide">Djanam</span>
         </div>
         <div className="flex items-center gap-2.5">
-          <button
-            onClick={toggleLang}
-            aria-label="Switch language"
-            className="h-9 px-3 rounded-full bg-white/[0.07] backdrop-blur flex items-center gap-1.5 hover:bg-white/[0.14] transition-colors cursor-pointer"
-          >
-            <Globe className="w-3.5 h-3.5 text-neutral-400" />
-            <span className="text-[11px] font-medium tracking-wider uppercase">{lang === "bg" ? "EN" : "BG"}</span>
-          </button>
+          <div className="relative">
+            <button
+              onClick={() => setShowLangMenu(!showLangMenu)}
+              aria-label="Switch language"
+              aria-expanded={showLangMenu}
+              className="h-9 px-3 rounded-full bg-white/[0.07] backdrop-blur flex items-center gap-1.5 hover:bg-white/[0.14] transition-colors cursor-pointer"
+            >
+              <Globe className="w-3.5 h-3.5 text-neutral-400" />
+              <span className="text-[11px] font-medium tracking-wider uppercase">{lang}</span>
+            </button>
+            {showLangMenu && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowLangMenu(false)} />
+                <div className="animate-fade-in absolute right-0 top-11 z-50 w-40 rounded-2xl border border-[#262626] bg-[#0e0e0e] shadow-2xl overflow-hidden">
+                  {([
+                    ["bg", "Български"],
+                    ["en", "English"],
+                    ["tr", "Türkçe"],
+                  ] as [Lang, string][]).map(([code, label]) => (
+                    <button
+                      key={code}
+                      onClick={() => changeLang(code)}
+                      className={`w-full text-left px-4 py-3 text-sm flex items-center justify-between transition-colors cursor-pointer ${
+                        lang === code ? "text-[#E8C97A] bg-white/[0.06]" : "text-neutral-300 hover:bg-white/[0.05]"
+                      }`}
+                    >
+                      {label}
+                      {lang === code && <Check className="w-4 h-4" style={{ color: GOLD }} />}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
           <button
             onClick={() => setShowSearch(!showSearch)}
             aria-label={s.search}
@@ -459,8 +577,8 @@ export default function Menu() {
                   >
                     <div className="min-w-0">
                       <p className="font-display text-[15px] truncate">{productName(p)}</p>
-                      {p.description && (
-                        <p className="text-xs text-neutral-500 truncate mt-0.5">{p.description}</p>
+                      {productDesc(p) && (
+                        <p className="text-xs text-neutral-500 truncate mt-0.5">{productDesc(p)}</p>
                       )}
                     </div>
                     <span className="shrink-0 font-display text-lg" style={{ color: GOLD }}>
@@ -499,7 +617,7 @@ export default function Menu() {
           const catProducts = productsByCategory[cat.id] || [];
           const names = splitCatName(cat.name);
           const Icon = categoryIcon[names.en] || UtensilsCrossed;
-          const subtitle = (lang === "en" ? categorySubtitleEn : categorySubtitleBg)[names.en] || "";
+          const subtitle = categorySubtitle[lang][names.en] || "";
 
           return (
             <section key={cat.id} id={`cat-section-${cat.id}`} className="scroll-mt-24 pt-10">
@@ -514,7 +632,7 @@ export default function Menu() {
                     </span>
                     <div>
                       <h3 className="font-display text-2xl leading-tight">
-                        {lang === "en" ? names.en : names.bg}
+                        {catName(cat.name)}
                       </h3>
                       {subtitle && <p className="text-[11px] text-neutral-500 mt-0.5 tracking-wide">{subtitle}</p>}
                     </div>
@@ -553,9 +671,9 @@ export default function Menu() {
                             {p.weight}
                           </span>
                         )}
-                        {p.description && (
+                        {productDesc(p) && (
                           <p className="text-xs text-neutral-500 line-clamp-2 leading-relaxed font-light">
-                            {p.description}
+                            {productDesc(p)}
                           </p>
                         )}
                       </div>
@@ -606,7 +724,7 @@ export default function Menu() {
               <button
                 key={cat.id}
                 onClick={() => scrollToCategory(cat.id)}
-                aria-label={lang === "en" ? names.en : names.bg}
+                aria-label={catName(cat.name)}
                 className={`shrink-0 flex items-center gap-2 px-4 h-11 rounded-2xl text-xs transition-all duration-300 border cursor-pointer ${
                   isActive
                     ? "text-black font-medium"
@@ -615,7 +733,7 @@ export default function Menu() {
                 style={isActive ? { backgroundColor: GOLD, borderColor: GOLD } : undefined}
               >
                 <Icon className="w-4 h-4" />
-                <span>{lang === "en" ? names.en : names.bg}</span>
+                <span>{catName(cat.name)}</span>
               </button>
             );
           })}
@@ -665,9 +783,7 @@ export default function Menu() {
 
               <div>
                 <span className="text-[10px] tracking-[0.25em] uppercase font-medium" style={{ color: GOLD }}>
-                  {selectedProduct.category?.name
-                    ? (lang === "en" ? splitCatName(selectedProduct.category.name).en : splitCatName(selectedProduct.category.name).bg)
-                    : s.menu}
+                  {selectedProduct.category?.name ? catName(selectedProduct.category.name) : s.menu}
                 </span>
                 <h2 className="font-display text-3xl leading-tight mt-2">{productName(selectedProduct)}</h2>
                 {lang === "bg" && selectedProduct.nameEn && selectedProduct.nameEn !== selectedProduct.name && (
@@ -675,9 +791,9 @@ export default function Menu() {
                 )}
               </div>
 
-              {selectedProduct.description && (
+              {productDesc(selectedProduct) && (
                 <p className="text-sm text-neutral-400 leading-relaxed font-light">
-                  {selectedProduct.description}
+                  {productDesc(selectedProduct)}
                 </p>
               )}
 
