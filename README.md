@@ -2,6 +2,13 @@
 
 Дигитално QR меню за ресторант **Djanam Steak & Fish** (Варна). Клиентите сканират QR код на масата и разглеждат менюто на телефона си; админ панел управлява маси, категории, продукти и аналитика.
 
+## Live
+
+- **Меню:** https://djanam-menu.vercel.app/menu/ (Vercel, статичен фронтенд + API proxy)
+- **Backend API:** https://backend-production-d1563.up.railway.app/api/trpc (Railway, Node + Hono + tRPC)
+- **База данни:** MySQL 8 в Railway
+- **Админ панел:** https://djanam-menu.vercel.app/menu/#/admin
+
 ## Структура на репозиторито
 
 - **Коренът** (`index.html`, `assets/`, `config.js`, …) — **компилираният production build**, готов за качване в `/menu/` подпапка на хостинга.
