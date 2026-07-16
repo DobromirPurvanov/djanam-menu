@@ -290,6 +290,9 @@ export default function Menu() {
 
   const s = t[lang];
 
+  /* Browse mode: /menu/browse — public menu view from the website (no table, no waiter) */
+  const isBrowse = qrToken === "browse";
+
   const changeLang = useCallback((next: Lang) => {
     setLang(next);
     setShowLangMenu(false);
@@ -300,13 +303,13 @@ export default function Menu() {
 
   const { data: table, isLoading: tableLoading } = trpc.table.byQrToken.useQuery(
     { qrToken: qrToken || "" },
-    { enabled: !!qrToken }
+    { enabled: !!qrToken && !isBrowse }
   );
 
   const visitMutation = trpc.table.visit.useMutation();
 
   useEffect(() => {
-    if (qrToken && table) {
+    if (qrToken && table && !isBrowse) {
       visitMutation.mutate({ qrToken });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -427,7 +430,7 @@ export default function Menu() {
     );
   }
 
-  if (!table) {
+  if (!isBrowse && !table) {
     return (
       <div className="min-h-screen bg-[#050505] text-white flex items-center justify-center p-6">
         <div className="max-w-md w-full text-center space-y-4">
@@ -492,9 +495,11 @@ export default function Menu() {
           >
             <Search className="w-4 h-4" />
           </button>
-          <span className="text-[11px] text-neutral-300 bg-white/[0.07] backdrop-blur px-3 py-2 rounded-full tracking-wide">
-            {s.table} {table.name.replace(/\D/g, "") || table.name}
-          </span>
+          {!isBrowse && table && (
+            <span className="text-[11px] text-neutral-300 bg-white/[0.07] backdrop-blur px-3 py-2 rounded-full tracking-wide">
+              {s.table} {table.name.replace(/\D/g, "") || table.name}
+            </span>
+          )}
         </div>
       </header>
 
@@ -741,14 +746,16 @@ export default function Menu() {
       </nav>
 
       {/* ─── Floating waiter button ─── */}
-      <button
-        onClick={handleCallWaiter}
-        aria-label={s.callWaiter}
-        className="fixed bottom-24 right-4 z-40 w-12 h-12 rounded-full flex items-center justify-center shadow-lg shadow-black/50 transition-transform hover:scale-110 active:scale-95 cursor-pointer"
-        style={{ backgroundColor: GOLD }}
-      >
-        <Bell className="w-5 h-5 text-black" />
-      </button>
+      {!isBrowse && (
+        <button
+          onClick={handleCallWaiter}
+          aria-label={s.callWaiter}
+          className="fixed bottom-24 right-4 z-40 w-12 h-12 rounded-full flex items-center justify-center shadow-lg shadow-black/50 transition-transform hover:scale-110 active:scale-95 cursor-pointer"
+          style={{ backgroundColor: GOLD }}
+        >
+          <Bell className="w-5 h-5 text-black" />
+        </button>
+      )}
 
       {/* ─── Product bottom sheet ─── */}
       {selectedProduct && (
@@ -818,17 +825,19 @@ export default function Menu() {
                 </span>
               </div>
 
-              <button
-                onClick={() => {
-                  handleCallWaiter();
-                  setSelectedProduct(null);
-                }}
-                className="w-full flex items-center justify-center gap-2.5 text-black font-medium py-4 rounded-2xl text-[15px] transition-transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-                style={{ backgroundColor: GOLD }}
-              >
-                <Bell className="w-[18px] h-[18px]" />
-                {s.callWaiter}
-              </button>
+              {!isBrowse && (
+                <button
+                  onClick={() => {
+                    handleCallWaiter();
+                    setSelectedProduct(null);
+                  }}
+                  className="w-full flex items-center justify-center gap-2.5 text-black font-medium py-4 rounded-2xl text-[15px] transition-transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+                  style={{ backgroundColor: GOLD }}
+                >
+                  <Bell className="w-[18px] h-[18px]" />
+                  {s.callWaiter}
+                </button>
+              )}
             </div>
           </div>
         </div>

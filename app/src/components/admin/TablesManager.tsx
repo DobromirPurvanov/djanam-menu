@@ -56,7 +56,7 @@ export default function TablesManager() {
 
   const getMenuUrl = (qrToken: string) => {
     const baseUrl = window.location.origin;
-    return `${baseUrl}/menu/${qrToken}`;
+    return `${baseUrl}/menu/#/menu/${qrToken}`;
   };
 
   const handleDownloadQr = (qrToken: string, tableName: string) => {
