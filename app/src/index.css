@@ -116,6 +116,20 @@ body {
 }
 .animate-hero-glow { animation: hero-glow 9s ease-in-out infinite; }
 
+/* Ken Burns — slow cinematic zoom for product photos */
+@keyframes kenburns {
+  from { transform: scale(1); }
+  to { transform: scale(1.09); }
+}
+.animate-kenburns { animation: kenburns 14s ease-in-out infinite alternate; }
+
+/* Product photo fade-in on load */
+@keyframes photo-in {
+  from { opacity: 0; transform: scale(1.04); }
+  to { opacity: 1; transform: scale(1); }
+}
+.animate-photo-in { animation: photo-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
 /* Skeleton shimmer */
 @keyframes shimmer {
   from { background-position: 200% 0; }
@@ -135,7 +149,7 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .reveal { opacity: 1; transform: none; transition: none; }
-  .animate-hero-glow, .animate-sheet-up, .animate-fade-in, .skeleton { animation: none; }
+  .animate-hero-glow, .animate-sheet-up, .animate-fade-in, .skeleton, .animate-kenburns, .animate-photo-in { animation: none; }
 }
 
 /* Hide scrollbar for horizontal scroll sections */

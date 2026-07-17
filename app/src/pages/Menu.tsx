@@ -24,6 +24,8 @@ import {
   Citrus,
   Coffee,
   Check,
+  ChevronLeft,
+  ChevronRight,
   type LucideIcon,
 } from "lucide-react";
 
@@ -284,6 +286,7 @@ export default function Menu() {
   const [activeCategory, setActiveCategory] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedProduct, setSelectedProduct] = useState<ProductItem | null>(null);
+  const [imgIdx, setImgIdx] = useState(0);
   const [waiterCalled, setWaiterCalled] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [showLangMenu, setShowLangMenu] = useState(false);
@@ -399,6 +402,17 @@ export default function Menu() {
   };
 
   const searchResults = searchQuery.trim() ? filteredProducts : [];
+
+  /* Gallery images for the open product sheet */
+  const sheetImages = useMemo(() => {
+    if (!selectedProduct) return [];
+    if (selectedProduct.images && selectedProduct.images.length > 0) return selectedProduct.images;
+    return selectedProduct.image ? [selectedProduct.image] : [];
+  }, [selectedProduct]);
+
+  useEffect(() => {
+    setImgIdx(0);
+  }, [selectedProduct]);
 
   /* ─── Landing (no QR) ─── */
   if (!qrToken) {
@@ -656,31 +670,46 @@ export default function Menu() {
                       onClick={() => setSelectedProduct(p)}
                       className="w-full text-left py-4 group cursor-pointer border-b border-[#121212] last:border-0"
                     >
-                      <div className="flex items-baseline justify-between gap-4">
-                        <h4 className="font-display text-[17px] leading-snug group-hover:text-[#E8C97A] transition-colors duration-300">
-                          {productName(p)}
-                        </h4>
-                        <div className="flex items-baseline gap-2 shrink-0">
-                          <span className="font-display text-lg tabular-nums" style={{ color: GOLD }}>
-                            {Number(p.priceEur).toFixed(2)}
-                            <span className="text-sm ml-0.5">€</span>
+                      <div className="flex items-center gap-4">
+                        {/* Product photo (when available) */}
+                        {p.image && (
+                          <span className="block w-16 h-16 rounded-2xl overflow-hidden shrink-0 border border-[#222] bg-[#0d0d0d]">
+                            <img
+                              src={p.image}
+                              alt={productName(p)}
+                              loading="lazy"
+                              className="animate-photo-in w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+                            />
                           </span>
-                          <span className="text-[11px] text-neutral-600 tabular-nums">
-                            {Number(p.priceBgn).toFixed(2)} лв.
-                          </span>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-baseline justify-between gap-4">
+                            <h4 className="font-display text-[17px] leading-snug group-hover:text-[#E8C97A] transition-colors duration-300">
+                              {productName(p)}
+                            </h4>
+                            <div className="flex items-baseline gap-2 shrink-0">
+                              <span className="font-display text-lg tabular-nums" style={{ color: GOLD }}>
+                                {Number(p.priceEur).toFixed(2)}
+                                <span className="text-sm ml-0.5">€</span>
+                              </span>
+                              <span className="text-[11px] text-neutral-600 tabular-nums">
+                                {Number(p.priceBgn).toFixed(2)} лв.
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3 mt-1">
+                            {p.weight && (
+                              <span className="text-[10px] text-neutral-500 tracking-wide uppercase shrink-0">
+                                {p.weight}
+                              </span>
+                            )}
+                            {productDesc(p) && (
+                              <p className="text-xs text-neutral-500 line-clamp-2 leading-relaxed font-light">
+                                {productDesc(p)}
+                              </p>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-3 mt-1">
-                        {p.weight && (
-                          <span className="text-[10px] text-neutral-500 tracking-wide uppercase shrink-0">
-                            {p.weight}
-                          </span>
-                        )}
-                        {productDesc(p) && (
-                          <p className="text-xs text-neutral-500 line-clamp-2 leading-relaxed font-light">
-                            {productDesc(p)}
-                          </p>
-                        )}
                       </div>
                     </button>
                   </Reveal>
@@ -778,13 +807,40 @@ export default function Menu() {
             </button>
 
             <div className="px-7 pt-4 space-y-6">
-              {selectedProduct.image && (
-                <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden bg-[#111]">
+              {sheetImages.length > 0 && (
+                <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-[#111]">
                   <img
-                    src={selectedProduct.image}
+                    key={sheetImages[imgIdx]}
+                    src={sheetImages[imgIdx]}
                     alt={productName(selectedProduct)}
-                    className="w-full h-full object-cover"
+                    className="animate-photo-in animate-kenburns w-full h-full object-cover"
                   />
+                  {sheetImages.length > 1 && (
+                    <>
+                      <button
+                        onClick={() => setImgIdx((imgIdx - 1 + sheetImages.length) % sheetImages.length)}
+                        aria-label="Previous photo"
+                        className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/60 backdrop-blur flex items-center justify-center hover:bg-black/80 transition-colors cursor-pointer"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => setImgIdx((imgIdx + 1) % sheetImages.length)}
+                        aria-label="Next photo"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/60 backdrop-blur flex items-center justify-center hover:bg-black/80 transition-colors cursor-pointer"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+                        {sheetImages.map((_, i) => (
+                          <span
+                            key={i}
+                            className={`w-1.5 h-1.5 rounded-full transition-colors ${i === imgIdx ? "bg-white" : "bg-white/40"}`}
+                          />
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
 
