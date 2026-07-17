@@ -678,6 +678,10 @@ export default function Menu() {
                               src={p.image}
                               alt={productName(p)}
                               loading="lazy"
+                              onError={(e) => {
+                                const wrap = e.currentTarget.closest("span");
+                                if (wrap) wrap.style.display = "none";
+                              }}
                               className="animate-photo-in w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
                             />
                           </span>
@@ -813,6 +817,10 @@ export default function Menu() {
                     key={sheetImages[imgIdx]}
                     src={sheetImages[imgIdx]}
                     alt={productName(selectedProduct)}
+                    onError={(e) => {
+                      const wrap = e.currentTarget.closest("div");
+                      if (wrap) wrap.style.display = "none";
+                    }}
                     className="animate-photo-in animate-kenburns w-full h-full object-cover"
                   />
                   {sheetImages.length > 1 && (
