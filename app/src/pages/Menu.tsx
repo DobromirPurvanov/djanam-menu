@@ -27,6 +27,9 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
+  Plus,
+  Minus,
+  ShoppingBag,
   type LucideIcon,
 } from "lucide-react";
 
@@ -193,6 +196,16 @@ const t = {
     tagUs: "Отбележете ни в сторито си — може да получите изненада",
     weight: "Грамаж",
     menu: "Меню",
+    addToOrder: "Добави",
+    order: "Поръчка",
+    total: "Общо",
+    sendOrder: "Изпрати поръчката",
+    sending: "Изпращане…",
+    orderSent: "Поръчката е изпратена!",
+    orderSentSub: "Сервитьорът я получи и идва при Вас.",
+    emptyOrder: "Все още няма артикули",
+    notesLabel: "Бележка (незадължително)",
+    notesPlaceholder: "Напр. без лук…",
   },
   en: {
     tagline: "Steak & Fish · Varna",
@@ -215,6 +228,16 @@ const t = {
     tagUs: "Tag us in your story — you might get a surprise",
     weight: "Weight",
     menu: "Menu",
+    addToOrder: "Add",
+    order: "Order",
+    total: "Total",
+    sendOrder: "Send the order",
+    sending: "Sending…",
+    orderSent: "Order sent!",
+    orderSentSub: "The waiter received it and is on the way.",
+    emptyOrder: "No items yet",
+    notesLabel: "Note (optional)",
+    notesPlaceholder: "E.g. no onion…",
   },
   tr: {
     tagline: "Biftek & Balık · Varna",
@@ -237,6 +260,16 @@ const t = {
     tagUs: "Hikayenizde bizi etiketleyin — sürpriz kazanabilirsiniz",
     weight: "Gramaj",
     menu: "Menü",
+    addToOrder: "Ekle",
+    order: "Sipariş",
+    total: "Toplam",
+    sendOrder: "Siparişi gönder",
+    sending: "Gönderiliyor…",
+    orderSent: "Sipariş gönderildi!",
+    orderSentSub: "Garson siparişi aldı, geliyor.",
+    emptyOrder: "Henüz ürün yok",
+    notesLabel: "Not (isteğe bağlı)",
+    notesPlaceholder: "Örn. soğansız…",
   },
 } as const;
 
@@ -291,6 +324,11 @@ export default function Menu() {
   const [waiterCalled, setWaiterCalled] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [showLangMenu, setShowLangMenu] = useState(false);
+  const [cart, setCart] = useState<Record<number, { p: ProductItem; qty: number; notes?: string }>>({});
+  const [cartOpen, setCartOpen] = useState(false);
+  const [orderSent, setOrderSent] = useState(false);
+  const [sheetQty, setSheetQty] = useState(1);
+  const [sheetNotes, setSheetNotes] = useState("");
 
   const s = t[lang];
 
@@ -326,6 +364,65 @@ export default function Menu() {
     setWaiterCalled(true);
     setTimeout(() => setWaiterCalled(false), 4000);
   }, []);
+
+  /* ─── Cart ─── */
+  const createOrder = trpc.order.create.useMutation();
+
+  const addToCart = useCallback((p: ProductItem, qty = 1, notes?: string) => {
+    setCart((prev) => ({
+      ...prev,
+      [p.id]: {
+        p,
+        qty: (prev[p.id]?.qty ?? 0) + qty,
+        notes: notes ?? prev[p.id]?.notes,
+      },
+    }));
+  }, []);
+
+  const setCartQty = useCallback((id: number, qty: number) => {
+    setCart((prev) => {
+      if (qty <= 0) {
+        const { [id]: _removed, ...rest } = prev;
+        return rest;
+      }
+      return { ...prev, [id]: { ...prev[id], qty } };
+    });
+  }, []);
+
+  const cartItems = useMemo(() => Object.values(cart), [cart]);
+  const cartCount = useMemo(() => cartItems.reduce((n, i) => n + i.qty, 0), [cartItems]);
+  const cartTotalEur = useMemo(
+    () => cartItems.reduce((sum, i) => sum + Number(i.p.priceEur) * i.qty, 0),
+    [cartItems]
+  );
+  const cartTotalBgn = useMemo(
+    () => cartItems.reduce((sum, i) => sum + Number(i.p.priceBgn) * i.qty, 0),
+    [cartItems]
+  );
+
+  const submitOrder = useCallback(() => {
+    if (!table || cartItems.length === 0) return;
+    createOrder.mutate(
+      {
+        tableId: table.id,
+        items: cartItems.map((i) => ({
+          productId: i.p.id,
+          productName: i.p.nameEn || i.p.name,
+          quantity: i.qty,
+          unitPrice: i.p.priceEur,
+          notes: i.notes,
+        })),
+      },
+      {
+        onSuccess: () => {
+          setCart({});
+          setCartOpen(false);
+          setOrderSent(true);
+          setTimeout(() => setOrderSent(false), 5000);
+        },
+      }
+    );
+  }, [table, cartItems, createOrder]);
 
   const filteredProducts = useMemo(() => {
     let list = (products as ProductItem[]) || [];
@@ -417,6 +514,8 @@ export default function Menu() {
 
   useEffect(() => {
     setImgIdx(0);
+    setSheetQty(1);
+    setSheetNotes("");
   }, [selectedProduct]);
 
   /* ─── Landing (no QR) ─── */
@@ -671,8 +770,11 @@ export default function Menu() {
               <div>
                 {catProducts.map((p, idx) => (
                   <Reveal key={p.id} delay={Math.min(idx * 40, 200)}>
-                    <button
+                    <div
+                      role="button"
+                      tabIndex={0}
                       onClick={() => setSelectedProduct(p)}
+                      onKeyDown={(e) => e.key === "Enter" && setSelectedProduct(p)}
                       className="w-full text-left py-4 group cursor-pointer border-b border-[#121212] last:border-0"
                     >
                       <div className="flex items-center gap-4">
@@ -693,7 +795,7 @@ export default function Menu() {
                         )}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-baseline justify-between gap-4">
-                            <h4 className="font-display text-[17px] leading-snug group-hover:text-[#E8C97A] transition-colors duration-300">
+                            <h4 className="font-display text-[17px] leading-snug group-hover:text-[#FF4D5E] transition-colors duration-300">
                               {productName(p)}
                             </h4>
                             <div className="flex items-baseline gap-2 shrink-0">
@@ -719,8 +821,32 @@ export default function Menu() {
                             )}
                           </div>
                         </div>
+
+                        {/* Add to order */}
+                        {!isBrowse && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              addToCart(p);
+                            }}
+                            aria-label={`${s.addToOrder}: ${productName(p)}`}
+                            className="relative shrink-0 w-9 h-9 rounded-full border flex items-center justify-center transition-all duration-300 cursor-pointer hover:scale-110 active:scale-95"
+                            style={
+                              cart[p.id]
+                                ? { backgroundColor: ACCENT, borderColor: ACCENT }
+                                : { borderColor: `${ACCENT}60`, backgroundColor: `${ACCENT}10` }
+                            }
+                          >
+                            <Plus className="w-4 h-4" style={{ color: cart[p.id] ? "#fff" : ACCENT_LIGHT }} />
+                            {cart[p.id] && (
+                              <span className="absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1 rounded-full bg-white text-black text-[11px] font-semibold flex items-center justify-center">
+                                {cart[p.id].qty}
+                              </span>
+                            )}
+                          </button>
+                        )}
                       </div>
-                    </button>
+                    </div>
                   </Reveal>
                 ))}
               </div>
@@ -793,6 +919,124 @@ export default function Menu() {
         >
           <Bell className="w-5 h-5 text-white" />
         </button>
+      )}
+
+      {/* ─── Order sent toast ─── */}
+      {orderSent && (
+        <div className="animate-fade-in fixed top-20 left-4 right-4 z-50 mx-auto max-w-sm">
+          <div
+            className="rounded-2xl px-5 py-4 flex items-center gap-3 text-sm backdrop-blur-md border shadow-2xl"
+            style={{ backgroundColor: `${ACCENT}18`, borderColor: `${ACCENT}45`, color: "#fff" }}
+          >
+            <ShoppingBag className="w-5 h-5 shrink-0" style={{ color: ACCENT_LIGHT }} />
+            <div>
+              <p className="font-medium">{s.orderSent}</p>
+              <p className="text-xs text-neutral-400 mt-0.5">{s.orderSentSub}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Floating cart bar ─── */}
+      {!isBrowse && cartCount > 0 && !cartOpen && (
+        <button
+          onClick={() => setCartOpen(true)}
+          className="animate-fade-in fixed bottom-24 left-4 right-20 z-40 flex items-center justify-between gap-3 px-5 py-3.5 rounded-2xl text-white shadow-lg shadow-black/50 transition-transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+          style={{ backgroundColor: ACCENT }}
+        >
+          <span className="flex items-center gap-2.5 text-sm font-medium">
+            <ShoppingBag className="w-[18px] h-[18px]" />
+            {cartCount} {s.items}
+          </span>
+          <span className="flex items-center gap-2 text-sm">
+            <span className="font-display text-lg tabular-nums">{cartTotalEur.toFixed(2)}€</span>
+            <span className="text-white/70 text-xs tabular-nums">{cartTotalBgn.toFixed(2)} лв.</span>
+          </span>
+        </button>
+      )}
+
+      {/* ─── Cart sheet ─── */}
+      {cartOpen && (
+        <div className="fixed inset-0 z-50" role="dialog" aria-modal="true">
+          <div
+            className="animate-fade-in absolute inset-0 bg-black/75 backdrop-blur-sm"
+            onClick={() => setCartOpen(false)}
+          />
+          <div className="animate-sheet-up absolute bottom-0 left-0 right-0 max-w-lg mx-auto max-h-[85vh] flex flex-col bg-[#0b0b0b] border-t border-[#262626] rounded-t-[2rem]">
+            <div className="pt-3 pb-2 bg-[#0b0b0b] flex justify-center rounded-t-[2rem]">
+              <div className="w-10 h-1 rounded-full bg-neutral-700" />
+            </div>
+            <div className="px-7 pb-3 flex items-center justify-between">
+              <h2 className="font-display text-2xl">{s.order}</h2>
+              <button
+                onClick={() => setCartOpen(false)}
+                aria-label="Close"
+                className="w-9 h-9 rounded-full bg-white/[0.07] flex items-center justify-center hover:bg-white/[0.14] transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-7">
+              {cartItems.length === 0 && (
+                <p className="py-8 text-center text-sm text-neutral-500">{s.emptyOrder}</p>
+              )}
+              <div className="divide-y divide-[#161616]">
+                {cartItems.map((i) => (
+                  <div key={i.p.id} className="py-4 flex items-center gap-4">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-display text-[15px] leading-snug">{productName(i.p)}</p>
+                      {i.notes && <p className="text-[11px] text-neutral-500 mt-0.5 truncate">{i.notes}</p>}
+                      <p className="text-xs tabular-nums mt-1" style={{ color: ACCENT_LIGHT }}>
+                        {(Number(i.p.priceEur) * i.qty).toFixed(2)}€
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <button
+                        onClick={() => setCartQty(i.p.id, i.qty - 1)}
+                        aria-label="Minus"
+                        className="w-8 h-8 rounded-full bg-white/[0.07] flex items-center justify-center hover:bg-white/[0.14] transition-colors cursor-pointer"
+                      >
+                        <Minus className="w-3.5 h-3.5" />
+                      </button>
+                      <span className="w-5 text-center text-sm tabular-nums">{i.qty}</span>
+                      <button
+                        onClick={() => setCartQty(i.p.id, i.qty + 1)}
+                        aria-label="Plus"
+                        className="w-8 h-8 rounded-full bg-white/[0.07] flex items-center justify-center hover:bg-white/[0.14] transition-colors cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {cartItems.length > 0 && (
+              <div className="px-7 pt-4 pb-8 space-y-4 border-t border-[#1c1c1c] bg-[#0b0b0b]">
+                <div className="flex items-end justify-between">
+                  <span className="text-xs uppercase tracking-wider text-neutral-500">{s.total}</span>
+                  <div className="flex items-baseline gap-2">
+                    <span className="font-display text-2xl tabular-nums" style={{ color: ACCENT_LIGHT }}>
+                      {cartTotalEur.toFixed(2)}€
+                    </span>
+                    <span className="text-xs text-neutral-500 tabular-nums">{cartTotalBgn.toFixed(2)} лв.</span>
+                  </div>
+                </div>
+                <button
+                  onClick={submitOrder}
+                  disabled={createOrder.isPending}
+                  className="w-full flex items-center justify-center gap-2.5 text-white font-medium py-4 rounded-2xl text-[15px] transition-transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer disabled:opacity-60 disabled:pointer-events-none"
+                  style={{ backgroundColor: ACCENT }}
+                >
+                  <ShoppingBag className="w-[18px] h-[18px]" />
+                  {createOrder.isPending ? s.sending : s.sendOrder}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
       {/* ─── Product bottom sheet ─── */}
@@ -895,17 +1139,48 @@ export default function Menu() {
               </div>
 
               {!isBrowse && (
-                <button
-                  onClick={() => {
-                    handleCallWaiter();
-                    setSelectedProduct(null);
-                  }}
-                  className="w-full flex items-center justify-center gap-2.5 text-white font-medium py-4 rounded-2xl text-[15px] transition-transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-                  style={{ backgroundColor: ACCENT }}
-                >
-                  <Bell className="w-[18px] h-[18px]" />
-                  {s.callWaiter}
-                </button>
+                <div className="space-y-4">
+                  {/* Quantity stepper */}
+                  <div className="flex items-center justify-center gap-6">
+                    <button
+                      onClick={() => setSheetQty(Math.max(1, sheetQty - 1))}
+                      aria-label="Minus"
+                      className="w-11 h-11 rounded-full bg-white/[0.07] flex items-center justify-center hover:bg-white/[0.14] transition-colors cursor-pointer"
+                    >
+                      <Minus className="w-4 h-4" />
+                    </button>
+                    <span className="font-display text-2xl w-8 text-center tabular-nums">{sheetQty}</span>
+                    <button
+                      onClick={() => setSheetQty(sheetQty + 1)}
+                      aria-label="Plus"
+                      className="w-11 h-11 rounded-full bg-white/[0.07] flex items-center justify-center hover:bg-white/[0.14] transition-colors cursor-pointer"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {/* Notes */}
+                  <input
+                    value={sheetNotes}
+                    onChange={(e) => setSheetNotes(e.target.value)}
+                    placeholder={s.notesPlaceholder}
+                    aria-label={s.notesLabel}
+                    className="w-full px-4 py-3 bg-[#111] border border-[#262626] rounded-xl text-sm text-white placeholder:text-neutral-600 focus:outline-none focus:border-[#E30614]/50"
+                  />
+
+                  {/* Add to order */}
+                  <button
+                    onClick={() => {
+                      addToCart(selectedProduct, sheetQty, sheetNotes.trim() || undefined);
+                      setSelectedProduct(null);
+                    }}
+                    className="w-full flex items-center justify-center gap-2.5 text-white font-medium py-4 rounded-2xl text-[15px] transition-transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+                    style={{ backgroundColor: ACCENT }}
+                  >
+                    <ShoppingBag className="w-[18px] h-[18px]" />
+                    {s.addToOrder} · {(Number(selectedProduct.priceEur) * sheetQty).toFixed(2)}€
+                  </button>
+                </div>
               )}
             </div>
           </div>

@@ -48,6 +48,12 @@ const procedures = {
   "table.byQrToken": (input) =>
     tables.find((t) => t.qrToken === input?.qrToken) ?? null,
   "table.visit": () => ({ success: true }),
+  "order.create": (input) => ({
+    id: Math.floor(Math.random() * 10000),
+    status: "pending",
+    total: (input?.items || []).reduce((s, i) => s + Number(i.unitPrice) * i.quantity, 0).toFixed(2),
+    items: input?.items || [],
+  }),
 };
 
 const server = createServer(async (req, res) => {
