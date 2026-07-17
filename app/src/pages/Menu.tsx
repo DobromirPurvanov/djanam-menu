@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useParams } from "react-router";
 import { trpc } from "@/providers/trpc";
 import { trNames, trDescriptions } from "@/i18n/tr";
+import { bgNames } from "@/i18n/bg";
 import {
   Search,
   X,
@@ -239,8 +240,8 @@ const t = {
   },
 } as const;
 
-const GOLD = "#D4A853";
-const GOLD_LIGHT = "#E8C97A";
+const ACCENT = "#E30614";
+const ACCENT_LIGHT = "#FF4D5E";
 
 /* ─── Helpers ─── */
 function splitCatName(full: string): { bg: string; en: string } {
@@ -384,7 +385,11 @@ export default function Menu() {
   };
 
   const productName = (p: ProductItem) =>
-    lang === "tr" ? trNames[p.name] || p.nameEn || p.name : lang === "en" ? p.nameEn || p.name : p.name;
+    lang === "tr"
+      ? trNames[p.name] || p.nameEn || p.name
+      : lang === "en"
+        ? p.nameEn || p.name
+        : bgNames[p.name] || p.name;
 
   const productDesc = (p: ProductItem): string | null => {
     if (!p.description) return null;
@@ -426,7 +431,7 @@ export default function Menu() {
             <h1 className="font-display text-5xl tracking-wide">Djanam</h1>
             <p className="mt-2 text-[11px] tracking-[0.35em] uppercase text-neutral-500">Steak & Fish</p>
           </div>
-          <div className="h-px w-16 mx-auto" style={{ backgroundColor: `${GOLD}60` }} />
+          <div className="h-px w-16 mx-auto" style={{ backgroundColor: `${ACCENT}60` }} />
           <p className="text-neutral-400 leading-relaxed">{s.scanPrompt}</p>
         </div>
       </div>
@@ -448,7 +453,7 @@ export default function Menu() {
     return (
       <div className="min-h-screen bg-[#050505] text-white flex items-center justify-center p-6">
         <div className="max-w-md w-full text-center space-y-4">
-          <h1 className="font-display text-2xl" style={{ color: GOLD }}>{s.invalidQr}</h1>
+          <h1 className="font-display text-2xl" style={{ color: ACCENT_LIGHT }}>{s.invalidQr}</h1>
           <p className="text-neutral-500">{s.invalidQrSub}</p>
         </div>
       </div>
@@ -495,7 +500,7 @@ export default function Menu() {
                       }`}
                     >
                       {label}
-                      {lang === code && <Check className="w-4 h-4" style={{ color: GOLD }} />}
+                      {lang === code && <Check className="w-4 h-4" style={{ color: ACCENT_LIGHT }} />}
                     </button>
                   ))}
                 </div>
@@ -519,10 +524,10 @@ export default function Menu() {
 
       {/* ─── Hero ─── */}
       <section className="relative w-full h-[72vh] min-h-[520px] flex items-center justify-center">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(212,168,83,0.07)_0%,_transparent_65%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(227,6,20,0.07)_0%,_transparent_65%)]" />
         <div
           className="animate-hero-glow absolute top-1/2 left-1/2 w-[26rem] h-[26rem] rounded-full blur-[130px]"
-          style={{ backgroundColor: GOLD }}
+          style={{ backgroundColor: ACCENT }}
         />
         <div className="relative text-center px-6">
           <Reveal>
@@ -531,7 +536,7 @@ export default function Menu() {
             </div>
           </Reveal>
           <Reveal delay={120}>
-            <p className="text-[11px] tracking-[0.4em] uppercase mb-5" style={{ color: GOLD }}>
+            <p className="text-[11px] tracking-[0.4em] uppercase mb-5" style={{ color: ACCENT_LIGHT }}>
               {s.tagline}
             </p>
           </Reveal>
@@ -553,9 +558,9 @@ export default function Menu() {
         <div className="animate-fade-in fixed top-20 left-4 right-4 z-50 mx-auto max-w-sm">
           <div
             className="rounded-2xl px-5 py-4 flex items-center gap-3 text-sm backdrop-blur-md border shadow-2xl"
-            style={{ backgroundColor: `${GOLD}18`, borderColor: `${GOLD}45`, color: GOLD_LIGHT }}
+            style={{ backgroundColor: `${ACCENT}18`, borderColor: `${ACCENT}45`, color: ACCENT_LIGHT }}
           >
-            <Bell className="w-5 h-5 shrink-0" style={{ color: GOLD }} />
+            <Bell className="w-5 h-5 shrink-0" style={{ color: ACCENT_LIGHT }} />
             <span>{s.waiterCalled}</span>
           </div>
         </div>
@@ -572,7 +577,7 @@ export default function Menu() {
                 placeholder={s.search}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-11 pr-11 py-3.5 bg-[#111] border border-[#2a2a2a] rounded-2xl text-white placeholder:text-neutral-600 focus:outline-none focus:border-[#D4A853]/50 text-base"
+                className="w-full pl-11 pr-11 py-3.5 bg-[#111] border border-[#2a2a2a] rounded-2xl text-white placeholder:text-neutral-600 focus:outline-none focus:border-[#E30614]/50 text-base"
               />
               <button
                 onClick={() => { setSearchQuery(""); setShowSearch(false); }}
@@ -600,7 +605,7 @@ export default function Menu() {
                         <p className="text-xs text-neutral-500 truncate mt-0.5">{productDesc(p)}</p>
                       )}
                     </div>
-                    <span className="shrink-0 font-display text-lg" style={{ color: GOLD }}>
+                    <span className="shrink-0 font-display text-lg" style={{ color: ACCENT_LIGHT }}>
                       {Number(p.priceEur).toFixed(2)}€
                     </span>
                   </button>
@@ -615,7 +620,7 @@ export default function Menu() {
       <main className="max-w-2xl mx-auto px-5 pb-44">
         <Reveal className="pt-4 pb-2">
           <div className="flex items-center gap-4">
-            <h2 className="text-[11px] tracking-[0.35em] uppercase font-medium" style={{ color: GOLD }}>
+            <h2 className="text-[11px] tracking-[0.35em] uppercase font-medium" style={{ color: ACCENT_LIGHT }}>
               {s.explore}
             </h2>
             <div className="flex-1 h-px bg-gradient-to-r from-[#2a2a2a] to-transparent" />
@@ -645,9 +650,9 @@ export default function Menu() {
                   <div className="flex items-center gap-3.5">
                     <span
                       className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 border"
-                      style={{ backgroundColor: `${GOLD}12`, borderColor: `${GOLD}30` }}
+                      style={{ backgroundColor: `${ACCENT}12`, borderColor: `${ACCENT}30` }}
                     >
-                      <Icon className="w-[18px] h-[18px]" style={{ color: GOLD }} />
+                      <Icon className="w-[18px] h-[18px]" style={{ color: ACCENT_LIGHT }} />
                     </span>
                     <div>
                       <h3 className="font-display text-2xl leading-tight">
@@ -660,7 +665,7 @@ export default function Menu() {
                     {catProducts.length} {s.items}
                   </span>
                 </div>
-                <div className="h-px mt-4 mb-2" style={{ background: `linear-gradient(to right, ${GOLD}50, transparent)` }} />
+                <div className="h-px mt-4 mb-2" style={{ background: `linear-gradient(to right, ${ACCENT}50, transparent)` }} />
               </Reveal>
 
               <div>
@@ -692,7 +697,7 @@ export default function Menu() {
                               {productName(p)}
                             </h4>
                             <div className="flex items-baseline gap-2 shrink-0">
-                              <span className="font-display text-lg tabular-nums" style={{ color: GOLD }}>
+                              <span className="font-display text-lg tabular-nums" style={{ color: ACCENT_LIGHT }}>
                                 {Number(p.priceEur).toFixed(2)}
                                 <span className="text-sm ml-0.5">€</span>
                               </span>
@@ -736,7 +741,7 @@ export default function Menu() {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2.5 text-sm text-neutral-400 hover:text-white transition-colors cursor-pointer"
             >
-              <Instagram className="w-4 h-4" style={{ color: GOLD }} />
+              <Instagram className="w-4 h-4" style={{ color: ACCENT_LIGHT }} />
               @djanam.restaurant
             </a>
             <p className="text-xs text-neutral-600 max-w-xs mx-auto">{s.tagUs}</p>
@@ -765,10 +770,10 @@ export default function Menu() {
                 aria-label={catName(cat.name)}
                 className={`shrink-0 flex items-center gap-2 px-4 h-11 rounded-2xl text-xs transition-all duration-300 border cursor-pointer ${
                   isActive
-                    ? "text-black font-medium"
+                    ? "text-white font-medium"
                     : "bg-white/[0.05] text-neutral-400 border-white/10 hover:bg-white/10 hover:text-white"
                 }`}
-                style={isActive ? { backgroundColor: GOLD, borderColor: GOLD } : undefined}
+                style={isActive ? { backgroundColor: ACCENT, borderColor: ACCENT } : undefined}
               >
                 <Icon className="w-4 h-4" />
                 <span>{catName(cat.name)}</span>
@@ -784,9 +789,9 @@ export default function Menu() {
           onClick={handleCallWaiter}
           aria-label={s.callWaiter}
           className="fixed bottom-24 right-4 z-40 w-12 h-12 rounded-full flex items-center justify-center shadow-lg shadow-black/50 transition-transform hover:scale-110 active:scale-95 cursor-pointer"
-          style={{ backgroundColor: GOLD }}
+          style={{ backgroundColor: ACCENT }}
         >
-          <Bell className="w-5 h-5 text-black" />
+          <Bell className="w-5 h-5 text-white" />
         </button>
       )}
 
@@ -853,7 +858,7 @@ export default function Menu() {
               )}
 
               <div>
-                <span className="text-[10px] tracking-[0.25em] uppercase font-medium" style={{ color: GOLD }}>
+                <span className="text-[10px] tracking-[0.25em] uppercase font-medium" style={{ color: ACCENT_LIGHT }}>
                   {selectedProduct.category?.name ? catName(selectedProduct.category.name) : s.menu}
                 </span>
                 <h2 className="font-display text-3xl leading-tight mt-2">{productName(selectedProduct)}</h2>
@@ -879,10 +884,10 @@ export default function Menu() {
 
               <div className="flex items-end justify-between">
                 <div className="flex items-baseline gap-2">
-                  <span className="font-display text-4xl tabular-nums" style={{ color: GOLD }}>
+                  <span className="font-display text-4xl tabular-nums" style={{ color: ACCENT_LIGHT }}>
                     {Number(selectedProduct.priceEur).toFixed(2)}
                   </span>
-                  <span className="text-lg" style={{ color: GOLD_LIGHT }}>€</span>
+                  <span className="text-lg" style={{ color: ACCENT_LIGHT }}>€</span>
                 </div>
                 <span className="text-sm text-neutral-500 tabular-nums">
                   {Number(selectedProduct.priceBgn).toFixed(2)} лв.
@@ -895,8 +900,8 @@ export default function Menu() {
                     handleCallWaiter();
                     setSelectedProduct(null);
                   }}
-                  className="w-full flex items-center justify-center gap-2.5 text-black font-medium py-4 rounded-2xl text-[15px] transition-transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-                  style={{ backgroundColor: GOLD }}
+                  className="w-full flex items-center justify-center gap-2.5 text-white font-medium py-4 rounded-2xl text-[15px] transition-transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+                  style={{ backgroundColor: ACCENT }}
                 >
                   <Bell className="w-[18px] h-[18px]" />
                   {s.callWaiter}
