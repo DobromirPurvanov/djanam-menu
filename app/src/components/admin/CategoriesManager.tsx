@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { trpc } from "@/providers/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +32,7 @@ export default function CategoriesManager() {
       utils.category.list.invalidate();
       setNewName("");
     },
+    onError: (e) => toast.error(e.message),
   });
 
   const updateCategory = trpc.category.update.useMutation({
@@ -38,10 +40,12 @@ export default function CategoriesManager() {
       utils.category.list.invalidate();
       setEditingId(null);
     },
+    onError: (e) => toast.error(e.message),
   });
 
   const deleteCategory = trpc.category.delete.useMutation({
     onSuccess: () => utils.category.list.invalidate(),
+    onError: (e) => toast.error(e.message),
   });
 
   const handleCreate = () => {

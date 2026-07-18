@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createRouter, publicQuery } from "./middleware";
+import { createRouter, publicQuery, adminProcedure } from "./middleware";
 import {
   findAllProducts,
   findActiveProducts,
@@ -23,7 +23,7 @@ export const productRouter = createRouter({
     .input(z.object({ id: z.number() }))
     .query(({ input }) => findProductById(input.id)),
 
-  create: publicQuery
+  create: adminProcedure
     .input(
       z.object({
         categoryId: z.number(),
@@ -31,16 +31,18 @@ export const productRouter = createRouter({
         nameEn: z.string().optional(),
         description: z.string().optional(),
         weight: z.string().optional(),
-        priceBgn: z.string().min(1),
-        priceEur: z.string().min(1),
+        priceBgn: z.string().regex(/^\d+(\.\d{1,2})?$/, "Invalid price"),
+        priceEur: z.string().regex(/^\d+(\.\d{1,2})?$/, "Invalid price"),
         image: z.string().optional(),
         images: z.array(z.string()).optional(),
+        tags: z.array(z.string()).optional(),
+        allergens: z.array(z.string()).optional(),
         sortOrder: z.number().optional(),
       })
     )
     .mutation(({ input }) => createProduct(input)),
 
-  update: publicQuery
+  update: adminProcedure
     .input(
       z.object({
         id: z.number(),
@@ -50,10 +52,12 @@ export const productRouter = createRouter({
           nameEn: z.string().optional(),
           description: z.string().optional(),
           weight: z.string().optional(),
-          priceBgn: z.string().optional(),
-          priceEur: z.string().optional(),
+          priceBgn: z.string().regex(/^\d+(\.\d{1,2})?$/, "Invalid price").optional(),
+          priceEur: z.string().regex(/^\d+(\.\d{1,2})?$/, "Invalid price").optional(),
           image: z.string().optional(),
           images: z.array(z.string()).optional(),
+          tags: z.array(z.string()).optional(),
+          allergens: z.array(z.string()).optional(),
           isAvailable: z.boolean().optional(),
           sortOrder: z.number().optional(),
         }),
@@ -61,7 +65,7 @@ export const productRouter = createRouter({
     )
     .mutation(({ input }) => updateProduct(input.id, input.data)),
 
-  delete: publicQuery
+  delete: adminProcedure
     .input(z.object({ id: z.number() }))
     .mutation(({ input }) => deleteProduct(input.id)),
 });

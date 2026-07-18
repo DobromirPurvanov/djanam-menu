@@ -1,5 +1,13 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { trpc } from "@/providers/trpc";
+
+// Official fixed BGN↔EUR rate (mandatory dual pricing).
+const BGN_PER_EUR = 1.95583;
+const bgnToEur = (bgn: string): string => {
+  const n = Number(bgn);
+  return Number.isFinite(n) && n > 0 ? (n / BGN_PER_EUR).toFixed(2) : "";
+};
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -33,7 +41,31 @@ interface ProductForm {
   priceEur: string;
   categoryId: string;
   images: string; // newline separated URLs
+  tags: string[]; // badge keys
+  allergens: string; // comma separated
 }
+
+// Badge options (keys must match BADGE_META in the customer menu).
+const BADGE_OPTIONS: { key: string; label: string }[] = [
+  { key: "signature", label: "Специалитет" },
+  { key: "new", label: "Ново" },
+  { key: "spicy", label: "Люто" },
+  { key: "vegan", label: "Веган" },
+  { key: "vegetarian", label: "Вегетарианско" },
+];
+
+const EMPTY_FORM: ProductForm = {
+  name: "",
+  nameEn: "",
+  description: "",
+  weight: "",
+  priceBgn: "",
+  priceEur: "",
+  categoryId: "",
+  images: "",
+  tags: [],
+  allergens: "",
+};
 
 import { products as productsSchema } from "@db/schema";
 
@@ -44,16 +76,7 @@ type Product = typeof productsSchema.$inferSelect & {
 export default function ProductsManager() {
   const [showAdd, setShowAdd] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [form, setForm] = useState<ProductForm>({
-    name: "",
-    nameEn: "",
-    description: "",
-    weight: "",
-    priceBgn: "",
-    priceEur: "",
-    categoryId: "",
-    images: "",
-  });
+  const [form, setForm] = useState<ProductForm>(EMPTY_FORM);
 
   const utils = trpc.useUtils();
   const { data: products } = trpc.product.list.useQuery();
@@ -63,8 +86,9 @@ export default function ProductsManager() {
     onSuccess: () => {
       utils.product.list.invalidate();
       setShowAdd(false);
-      setForm({ name: "", nameEn: "", description: "", weight: "", priceBgn: "", priceEur: "", categoryId: "", images: "" });
+      setForm(EMPTY_FORM);
     },
+    onError: (e) => toast.error(e.message),
   });
 
   const updateProduct = trpc.product.update.useMutation({
@@ -72,10 +96,12 @@ export default function ProductsManager() {
       utils.product.list.invalidate();
       setEditingId(null);
     },
+    onError: (e) => toast.error(e.message),
   });
 
   const deleteProduct = trpc.product.delete.useMutation({
     onSuccess: () => utils.product.list.invalidate(),
+    onError: (e) => toast.error(e.message),
   });
 
   const parseImages = (raw: string): string[] => {
@@ -90,9 +116,25 @@ export default function ProductsManager() {
     return imgs.join("\n");
   };
 
+  const parseCsv = (raw: string): string[] =>
+    raw
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+
+  const toggleTag = (key: string) => {
+    setForm((prev) => ({
+      ...prev,
+      tags: prev.tags.includes(key)
+        ? prev.tags.filter((t) => t !== key)
+        : [...prev.tags, key],
+    }));
+  };
+
   const handleCreate = () => {
     if (!form.name.trim() || !form.priceBgn || !form.priceEur || !form.categoryId) return;
     const imgs = parseImages(form.images);
+    const allergens = parseCsv(form.allergens);
     createProduct.mutate({
       name: form.name.trim(),
       nameEn: form.nameEn || undefined,
@@ -103,6 +145,8 @@ export default function ProductsManager() {
       categoryId: Number(form.categoryId),
       image: imgs[0] || undefined,
       images: imgs.length > 0 ? imgs : undefined,
+      tags: form.tags.length > 0 ? form.tags : undefined,
+      allergens: allergens.length > 0 ? allergens : undefined,
     });
   };
 
@@ -117,12 +161,17 @@ export default function ProductsManager() {
       priceEur: product.priceEur,
       categoryId: String(product.categoryId),
       images: stringifyImages(product.images),
+      tags: Array.isArray(product.tags) ? product.tags : [],
+      allergens: Array.isArray(product.allergens)
+        ? product.allergens.join(", ")
+        : "",
     });
   };
 
   const handleUpdate = () => {
     if (!editingId || !form.name.trim() || !form.priceBgn || !form.priceEur) return;
     const imgs = parseImages(form.images);
+    const allergens = parseCsv(form.allergens);
     updateProduct.mutate({
       id: editingId,
       data: {
@@ -135,12 +184,14 @@ export default function ProductsManager() {
         categoryId: Number(form.categoryId),
         image: imgs[0] || undefined,
         images: imgs.length > 0 ? imgs : undefined,
+        tags: form.tags,
+        allergens,
       },
     });
   };
 
   const resetForm = () => {
-    setForm({ name: "", nameEn: "", description: "", weight: "", priceBgn: "", priceEur: "", categoryId: "", images: "" });
+    setForm(EMPTY_FORM);
   };
 
   return (
@@ -267,8 +318,9 @@ export default function ProductsManager() {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium">Име (BG)</label>
+              <label htmlFor="product-name-bg" className="text-sm font-medium">Име (BG)</label>
               <Input
+                id="product-name-bg"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 placeholder="Име на продукт"
@@ -276,8 +328,9 @@ export default function ProductsManager() {
               />
             </div>
             <div>
-              <label className="text-sm font-medium">Име (EN)</label>
+              <label htmlFor="product-name-en" className="text-sm font-medium">Име (EN)</label>
               <Input
+                id="product-name-en"
                 value={form.nameEn}
                 onChange={(e) => setForm({ ...form, nameEn: e.target.value })}
                 placeholder="English name"
@@ -304,19 +357,28 @@ export default function ProductsManager() {
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-sm font-medium">Цена (BGN)</label>
+                <label htmlFor="price-bgn" className="text-sm font-medium">Цена (BGN)</label>
                 <Input
+                  id="price-bgn"
                   type="number"
                   step="0.01"
                   value={form.priceBgn}
-                  onChange={(e) => setForm({ ...form, priceBgn: e.target.value })}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      priceBgn: e.target.value,
+                      // Keep EUR in sync via the official fixed rate.
+                      priceEur: bgnToEur(e.target.value),
+                    })
+                  }
                   placeholder="0.00"
                   className="bg-[#0a0a0a] border-[#333] text-white placeholder:text-gray-600"
                 />
               </div>
               <div>
-                <label className="text-sm font-medium">Цена (EUR)</label>
+                <label htmlFor="price-eur" className="text-sm font-medium">Цена (EUR)</label>
                 <Input
+                  id="price-eur"
                   type="number"
                   step="0.01"
                   value={form.priceEur}
@@ -324,11 +386,15 @@ export default function ProductsManager() {
                   placeholder="0.00"
                   className="bg-[#0a0a0a] border-[#333] text-white placeholder:text-gray-600"
                 />
+                <p className="mt-1 text-[11px] text-gray-500">
+                  Авто по курс {BGN_PER_EUR}
+                </p>
               </div>
             </div>
             <div>
-              <label className="text-sm font-medium">Грамаж</label>
+              <label htmlFor="product-weight" className="text-sm font-medium">Грамаж</label>
               <Input
+                id="product-weight"
                 value={form.weight}
                 onChange={(e) => setForm({ ...form, weight: e.target.value })}
                 placeholder="напр. 300г"
@@ -336,8 +402,9 @@ export default function ProductsManager() {
               />
             </div>
             <div>
-              <label className="text-sm font-medium">Описание</label>
+              <label htmlFor="product-description" className="text-sm font-medium">Описание</label>
               <Textarea
+                id="product-description"
                 value={form.description}
                 onChange={(e) =>
                   setForm({ ...form, description: e.target.value })
@@ -347,12 +414,45 @@ export default function ProductsManager() {
               />
             </div>
             <div>
-              <label className="text-sm font-medium">Снимки (URL-ове, по един на ред)</label>
+              <label htmlFor="product-images" className="text-sm font-medium">Снимки (URL-ове, по един на ред)</label>
               <Textarea
+                id="product-images"
                 value={form.images}
                 onChange={(e) => setForm({ ...form, images: e.target.value })}
                 placeholder="https://example.com/img1.jpg&#10;https://example.com/img2.jpg"
                 className="text-sm min-h-[80px] bg-[#0a0a0a] border-[#333] text-white placeholder:text-gray-600"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Баджове</label>
+              <div className="mt-1.5 flex flex-wrap gap-2">
+                {BADGE_OPTIONS.map((opt) => {
+                  const active = form.tags.includes(opt.key);
+                  return (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      onClick={() => toggleTag(opt.key)}
+                      className={`rounded-full border px-3 py-1.5 text-xs transition-colors ${
+                        active
+                          ? "border-red-600 bg-red-600 text-white"
+                          : "border-[#333] bg-transparent text-gray-400 hover:bg-[#222]"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div>
+              <label htmlFor="product-allergens" className="text-sm font-medium">Алергени (разделени със запетая)</label>
+              <Input
+                id="product-allergens"
+                value={form.allergens}
+                onChange={(e) => setForm({ ...form, allergens: e.target.value })}
+                placeholder="глутен, яйца, мляко"
+                className="bg-[#0a0a0a] border-[#333] text-white placeholder:text-gray-600"
               />
             </div>
           </div>

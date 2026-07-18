@@ -52,9 +52,23 @@ DATABASE_URL=mysql://djanam_user:your_secure_password@localhost:3306/djanam_menu
 PORT=3000
 NODE_ENV=production
 
-# tRPC API path - must match your domain setup
-VITE_API_URL=/api/trpc
+# Admin panel authentication (see "Admin authentication" below)
+ADMIN_TOKEN=change-me-to-a-long-random-secret
+
+# Seeding — set true only for the one-time seed, then back to false
+ALLOW_SEED=false
 ```
+
+> The frontend does **not** read `VITE_API_URL`. The API base URL is configured
+> at runtime in `config.js` via `window.__DJANAM_API_URL__`
+> (default `/menu/api/trpc`, served same-domain through the Vercel rewrite).
+
+### Admin authentication (`ADMIN_TOKEN`)
+
+The admin panel is protected by a shared secret. Set `ADMIN_TOKEN` to a long,
+random string in your backend env (e.g. Railway → Variables). On login the admin
+panel sends this value in the `x-admin-token` header, and the backend rejects any
+request whose header does not match `ADMIN_TOKEN`. Never commit the real value.
 
 ### Run database migrations
 ```bash
@@ -297,9 +311,13 @@ pm2 startup
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `DATABASE_URL` | Yes | MySQL connection string |
+| `ADMIN_TOKEN` | Yes | Admin panel secret, compared against the `x-admin-token` header |
 | `PORT` | No | Server port (default: 3000) |
 | `NODE_ENV` | No | `production` or `development` |
-| `VITE_API_URL` | No | tRPC endpoint path |
+| `ALLOW_SEED` | No | Set `true` only for the one-time seed, then back to `false` |
+
+> Note: the frontend API base URL is **not** an env variable — it is set at
+> runtime in `config.js` (`window.__DJANAM_API_URL__`).
 
 ---
 

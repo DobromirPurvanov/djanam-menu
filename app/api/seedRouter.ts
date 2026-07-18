@@ -1,9 +1,19 @@
-import { createRouter, publicQuery } from "./middleware";
+import { TRPCError } from "@trpc/server";
+import { createRouter, adminProcedure } from "./middleware";
 import { getDb } from "./queries/connection";
 import { categories, products, tables } from "@db/schema";
 
 export const seedRouter = createRouter({
-  run: publicQuery.mutation(async () => {
+  run: adminProcedure.mutation(async () => {
+    if (
+      process.env.NODE_ENV === "production" &&
+      process.env.ALLOW_SEED !== "true"
+    ) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "Seeding disabled in production",
+      });
+    }
     const db = getDb();
 
     // Clear existing data first
@@ -63,13 +73,13 @@ export const seedRouter = createRouter({
 
     // === SALADS (IMG_0108 + IMG_0109) ===
     await db.insert(products).values([
-      { categoryId: catSalads, name: "La Opera", nameEn: "La Opera", weight: "330г", description: "Микс от зелени салати, айсберг, рукола, цвекло, авокадо, чери домати, орехи, сушени сливи, крутони, дресинг", priceBgn: "29.99", priceEur: "15.33", isAvailable: true, sortOrder: 1 },
-      { categoryId: catSalads, name: "Turkish Cheese", nameEn: "Turkish Cheese", weight: "300г", description: "Микс зелени салати, чери домати, краставици, турско сирене, препечени филийки", priceBgn: "24.99", priceEur: "12.78", isAvailable: true, sortOrder: 2 },
-      { categoryId: catSalads, name: "Avocado Shrimps", nameEn: "Avocado Shrimps", weight: "280г", description: "Микс зелени салати, авокадо, скариди, чери домати, дресинг", priceBgn: "29.99", priceEur: "15.33", isAvailable: true, sortOrder: 3 },
+      { categoryId: catSalads, name: "La Opera", nameEn: "La Opera", weight: "330г", tags: ["signature"], allergens: ["глутен", "ядки"], description: "Микс от зелени салати, айсберг, рукола, цвекло, авокадо, чери домати, орехи, сушени сливи, крутони, дресинг", priceBgn: "29.99", priceEur: "15.33", isAvailable: true, sortOrder: 1 },
+      { categoryId: catSalads, name: "Turkish Cheese", nameEn: "Turkish Cheese", weight: "300г", allergens: ["глутен", "мляко"], description: "Микс зелени салати, чери домати, краставици, турско сирене, препечени филийки", priceBgn: "24.99", priceEur: "12.78", isAvailable: true, sortOrder: 2 },
+      { categoryId: catSalads, name: "Avocado Shrimps", nameEn: "Avocado Shrimps", weight: "280г", allergens: ["ракообразни"], description: "Микс зелени салати, авокадо, скариди, чери домати, дресинг", priceBgn: "29.99", priceEur: "15.33", isAvailable: true, sortOrder: 3 },
       { categoryId: catSalads, name: "Smoked Salmon", nameEn: "Smoked Salmon", weight: "220г", description: "Микс зелени салати, пушена сьомга, авокадо, дресинг", priceBgn: "29.99", priceEur: "15.33", isAvailable: true, sortOrder: 4 },
       { categoryId: catSalads, name: "Bresaola", nameEn: "Bresaola", weight: "220г", description: "Микс зелени салати, брезаола, пармезан, дресинг", priceBgn: "29.99", priceEur: "15.33", isAvailable: true, sortOrder: 5 },
-      { categoryId: catSalads, name: "Choban", nameEn: "Choban", weight: "300г", description: "Микс зелени салати, домати, краставици, лук, сирене, маслини", priceBgn: "17.99", priceEur: "9.20", isAvailable: true, sortOrder: 6 },
-      { categoryId: catSalads, name: "Burrata", nameEn: "Burrata", weight: "250г", description: "Бурата, чери домати, рукола, босилек, дресинг", priceBgn: "29.99", priceEur: "15.33", isAvailable: true, sortOrder: 7 },
+      { categoryId: catSalads, name: "Choban", nameEn: "Choban", weight: "300г", tags: ["vegetarian"], allergens: ["мляко"], description: "Микс зелени салати, домати, краставици, лук, сирене, маслини", priceBgn: "17.99", priceEur: "9.20", isAvailable: true, sortOrder: 6 },
+      { categoryId: catSalads, name: "Burrata", nameEn: "Burrata", weight: "250г", tags: ["signature", "vegetarian"], allergens: ["мляко"], description: "Бурата, чери домати, рукола, босилек, дресинг", priceBgn: "29.99", priceEur: "15.33", isAvailable: true, sortOrder: 7 },
       { categoryId: catSalads, name: "Greek", nameEn: "Greek Salad", weight: "350г", description: "Домати, краставици, лук, зелена чушка, маслини, сирене фета", priceBgn: "18.99", priceEur: "9.71", isAvailable: true, sortOrder: 8 },
       { categoryId: catSalads, name: "Tabbouleh", nameEn: "Tabbouleh", weight: "250г", description: "Магданоз, кус-кус, домати, лук, лимон, зехтин", priceBgn: "14.99", priceEur: "7.66", isAvailable: true, sortOrder: 9 },
       { categoryId: catSalads, name: "Caesar with Chicken", nameEn: "Caesar with Chicken", weight: "250г", description: "Айсберг, пилешко филе, пармезан, крутони, дресинг Цезар", priceBgn: "18.99", priceEur: "9.71", isAvailable: true, sortOrder: 10 },

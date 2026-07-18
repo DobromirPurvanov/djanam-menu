@@ -8,9 +8,18 @@ import type { ReactNode } from "react";
 export const trpc = createTRPCReact<AppRouter>();
 
 // Read API URL from global config (set in config.js)
+declare global {
+  interface Window {
+    __DJANAM_API_URL__?: string;
+  }
+}
+
 const API_URL =
-  (typeof window !== "undefined" && (window as any).__DJANAM_API_URL__) ||
+  (typeof window !== "undefined" && window.__DJANAM_API_URL__) ||
   "/menu/api/trpc";
+
+// localStorage key holding the admin token (set on admin login).
+export const ADMIN_TOKEN_KEY = "djanam_admin_token";
 
 const queryClient = new QueryClient();
 const trpcClient = trpc.createClient({
@@ -18,11 +27,15 @@ const trpcClient = trpc.createClient({
     httpBatchLink({
       url: API_URL,
       transformer: superjson,
-      fetch(input, init) {
-        return globalThis.fetch(input, {
-          ...(init ?? {}),
-          credentials: "include",
-        });
+      // Sent on every request; admin-only procedures require it. Read fresh
+      // from storage each time so a login mid-session takes effect immediately.
+      headers() {
+        try {
+          const token = localStorage.getItem(ADMIN_TOKEN_KEY);
+          return token ? { "x-admin-token": token } : {};
+        } catch {
+          return {};
+        }
       },
     }),
   ],

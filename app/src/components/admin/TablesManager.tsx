@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { trpc } from "@/providers/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,19 +33,22 @@ export default function TablesManager() {
       utils.table.list.invalidate();
       setNewTableName("");
     },
+    onError: (e) => toast.error(e.message),
   });
 
   const updateTable = trpc.table.update.useMutation({
     onSuccess: () => utils.table.list.invalidate(),
+    onError: (e) => toast.error(e.message),
   });
 
   const deleteTable = trpc.table.delete.useMutation({
     onSuccess: () => utils.table.list.invalidate(),
+    onError: (e) => toast.error(e.message),
   });
 
   const handleCreate = () => {
     if (!newTableName.trim()) return;
-    const qrToken = `table-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const qrToken = `table-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
     createTable.mutate({ name: newTableName.trim(), qrToken });
   };
 

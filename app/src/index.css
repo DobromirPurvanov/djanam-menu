@@ -174,6 +174,54 @@ body {
   animation: photo-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* Product modal "plate" — spins in on open, then settles */
+@keyframes plate-in {
+  0% {
+    opacity: 0;
+    transform: rotate(-235deg) scale(0.35);
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+  }
+}
+.animate-plate-in {
+  animation: plate-in 0.95s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+/* Gentle idle float so the plate feels alive after landing */
+@keyframes plate-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+.plate-float {
+  animation: plate-float 5.5s ease-in-out 1.1s infinite;
+}
+/* Slowly rotating accent ring behind the plate */
+@keyframes plate-ring-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.plate-ring {
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(227, 6, 20, 0.55) 90deg,
+    transparent 200deg,
+    rgba(227, 6, 20, 0.35) 320deg,
+    transparent 360deg
+  );
+  animation: plate-ring-spin 12s linear infinite;
+}
+
 /* Product photography: subtle motion without shifting card layout */
 .menu-photo {
   transform: scale(1.001);
@@ -218,7 +266,10 @@ body {
   .animate-fade-in,
   .skeleton,
   .animate-kenburns,
-  .animate-photo-in {
+  .animate-photo-in,
+  .animate-plate-in,
+  .plate-float,
+  .plate-ring {
     animation: none;
   }
   .menu-photo,

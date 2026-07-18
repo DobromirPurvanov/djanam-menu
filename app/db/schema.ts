@@ -58,6 +58,8 @@ export const products = mysqlTable(
     priceEur: decimal("price_eur", { precision: 10, scale: 2 }).notNull(),
     image: varchar("image", { length: 500 }),
     images: json("images").$type<string[]>(),
+    tags: json("tags").$type<string[]>(),
+    allergens: json("allergens").$type<string[]>(),
     isAvailable: boolean("is_available").notNull().default(true),
     sortOrder: int("sort_order").notNull().default(0),
     createdAt: timestamp("created_at").defaultNow().notNull(),

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createRouter, publicQuery } from "./middleware";
+import { createRouter, publicQuery, adminProcedure } from "./middleware";
 import {
   findAllTables,
   findTableById,
@@ -11,9 +11,9 @@ import {
 } from "./queries/tables";
 
 export const tableRouter = createRouter({
-  list: publicQuery.query(() => findAllTables()),
+  list: adminProcedure.query(() => findAllTables()),
 
-  byId: publicQuery
+  byId: adminProcedure
     .input(z.object({ id: z.number() }))
     .query(({ input }) => findTableById(input.id)),
 
@@ -21,11 +21,11 @@ export const tableRouter = createRouter({
     .input(z.object({ qrToken: z.string() }))
     .query(({ input }) => findTableByQrToken(input.qrToken)),
 
-  create: publicQuery
+  create: adminProcedure
     .input(z.object({ name: z.string().min(1), qrToken: z.string().min(1) }))
     .mutation(({ input }) => createTable(input)),
 
-  update: publicQuery
+  update: adminProcedure
     .input(
       z.object({
         id: z.number(),
@@ -37,7 +37,7 @@ export const tableRouter = createRouter({
     )
     .mutation(({ input }) => updateTable(input.id, input.data)),
 
-  delete: publicQuery
+  delete: adminProcedure
     .input(z.object({ id: z.number() }))
     .mutation(({ input }) => deleteTable(input.id)),
 

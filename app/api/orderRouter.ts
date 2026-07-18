@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createRouter, publicQuery } from "./middleware";
+import { createRouter, publicQuery, adminProcedure } from "./middleware";
 import {
   findAllOrders,
   findOrdersByTable,
@@ -12,45 +12,50 @@ import {
 } from "./queries/orders";
 
 export const orderRouter = createRouter({
-  list: publicQuery.query(() => findAllOrders()),
+  list: adminProcedure.query(() => findAllOrders()),
 
-  byTable: publicQuery
+  byTable: adminProcedure
     .input(z.object({ tableId: z.number() }))
     .query(({ input }) => findOrdersByTable(input.tableId)),
 
-  byId: publicQuery
+  byId: adminProcedure
     .input(z.object({ id: z.number() }))
     .query(({ input }) => findOrderById(input.id)),
 
   create: publicQuery
     .input(
       z.object({
-        tableId: z.number(),
-        items: z.array(
-          z.object({
-            productId: z.number(),
-            productName: z.string(),
-            quantity: z.number().min(1),
-            unitPrice: z.string(),
-            notes: z.string().optional(),
-          })
-        ),
-        notes: z.string().optional(),
+        tableId: z.number().int().positive(),
+        items: z
+          .array(
+            z.object({
+              productId: z.number().int().positive(),
+              quantity: z.number().int().min(1).max(99),
+              notes: z.string().max(500).optional(),
+            })
+          )
+          .min(1),
+        notes: z.string().max(1000).optional(),
       })
     )
     .mutation(({ input }) => createOrder(input)),
 
-  updateStatus: publicQuery
-    .input(z.object({ id: z.number(), status: z.string() }))
+  updateStatus: adminProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        status: z.enum(["pending", "preparing", "ready", "served", "cancelled"]),
+      })
+    )
     .mutation(({ input }) => updateOrderStatus(input.id, input.status)),
 
-  delete: publicQuery
+  delete: adminProcedure
     .input(z.object({ id: z.number() }))
     .mutation(({ input }) => deleteOrder(input.id)),
 
-  stats: publicQuery.query(() => getTableStats()),
+  stats: adminProcedure.query(() => getTableStats()),
 
-  dailyRevenue: publicQuery
+  dailyRevenue: adminProcedure
     .input(z.object({ days: z.number().optional() }))
     .query(({ input }) => getDailyRevenue(input.days ?? 30)),
 });

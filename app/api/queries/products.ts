@@ -40,6 +40,8 @@ export async function createProduct(data: {
   priceEur: string;
   image?: string;
   images?: string[];
+  tags?: string[];
+  allergens?: string[];
   sortOrder?: number;
 }) {
   const [{ id }] = await getDb()
@@ -61,6 +63,8 @@ export async function updateProduct(
     priceEur?: string;
     image?: string;
     images?: string[];
+    tags?: string[];
+    allergens?: string[];
     isAvailable?: boolean;
     sortOrder?: number;
   }

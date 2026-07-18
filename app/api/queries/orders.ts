@@ -1,6 +1,14 @@
 import { getDb } from "./connection";
-import { orders, orderItems, tables } from "@db/schema";
-import { eq, desc, gte, sql } from "drizzle-orm";
+import { orders, orderItems, tables, products } from "@db/schema";
+import { eq, desc, gte, sql, inArray } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
+
+type OrderStatus =
+  | "pending"
+  | "preparing"
+  | "ready"
+  | "served"
+  | "cancelled";
 
 export async function findAllOrders() {
   return getDb().query.orders.findMany({
@@ -28,44 +36,80 @@ export async function createOrder(data: {
   tableId: number;
   items: {
     productId: number;
-    productName: string;
     quantity: number;
-    unitPrice: string;
     notes?: string;
   }[];
   notes?: string;
 }) {
-  const total = data.items
+  const db = getDb();
+
+  // Verify table exists
+  const table = await db.query.tables.findFirst({
+    where: eq(tables.id, data.tableId),
+  });
+  if (!table) {
+    throw new TRPCError({ code: "NOT_FOUND", message: "Table not found" });
+  }
+
+  // Load all referenced products in one query
+  const productIds = data.items.map((item) => item.productId);
+  const productRows = await db
+    .select()
+    .from(products)
+    .where(inArray(products.id, productIds));
+  const productMap = new Map(productRows.map((p) => [p.id, p]));
+
+  // Compute server-side prices and validate availability
+  const resolvedItems = data.items.map((item) => {
+    const product = productMap.get(item.productId);
+    if (!product || product.isAvailable === false) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: `Product ${item.productId} is not available`,
+      });
+    }
+    return {
+      productId: product.id,
+      productName: product.name,
+      quantity: item.quantity,
+      unitPrice: product.priceEur,
+      notes: item.notes || null,
+    };
+  });
+
+  const total = resolvedItems
     .reduce((sum, item) => sum + Number(item.unitPrice) * item.quantity, 0)
     .toFixed(2);
 
-  const [{ id: orderId }] = await getDb()
-    .insert(orders)
-    .values({
-      tableId: data.tableId,
-      status: "pending",
-      total,
-      notes: data.notes,
-    })
-    .$returningId();
+  const orderId = await db.transaction(async (tx) => {
+    const [{ id }] = await tx
+      .insert(orders)
+      .values({
+        tableId: data.tableId,
+        status: "pending",
+        total,
+        notes: data.notes,
+      })
+      .$returningId();
 
-  if (data.items.length > 0) {
-    await getDb().insert(orderItems).values(
-      data.items.map((item) => ({
-        orderId,
+    await tx.insert(orderItems).values(
+      resolvedItems.map((item) => ({
+        orderId: id,
         productId: item.productId,
         productName: item.productName,
         quantity: item.quantity,
         unitPrice: item.unitPrice,
-        notes: item.notes || null,
+        notes: item.notes,
       }))
     );
-  }
+
+    return id;
+  });
 
   return findOrderById(orderId);
 }
 
-export async function updateOrderStatus(id: number, status: string) {
+export async function updateOrderStatus(id: number, status: OrderStatus) {
   await getDb()
     .update(orders)
     .set({ status, updatedAt: new Date() })
@@ -74,23 +118,25 @@ export async function updateOrderStatus(id: number, status: string) {
 }
 
 export async function deleteOrder(id: number) {
-  await getDb().delete(orderItems).where(eq(orderItems.orderId, id));
-  await getDb().delete(orders).where(eq(orders.id, id));
+  await getDb().transaction(async (tx) => {
+    await tx.delete(orderItems).where(eq(orderItems.orderId, id));
+    await tx.delete(orders).where(eq(orders.id, id));
+  });
 }
 
 export async function getTableStats() {
   const db = getDb();
   const result = await db
     .select({
-      tableId: orders.tableId,
+      tableId: tables.id,
       tableName: tables.name,
       visitCount: tables.visitCount,
-      totalRevenue: tables.totalRevenue,
+      totalRevenue: sql<string>`COALESCE(SUM(${orders.total}), 0)`,
       orderCount: sql<number>`COUNT(${orders.id})`,
     })
-    .from(orders)
-    .innerJoin(tables, eq(orders.tableId, tables.id))
-    .groupBy(orders.tableId)
+    .from(tables)
+    .leftJoin(orders, eq(orders.tableId, tables.id))
+    .groupBy(tables.id, tables.name, tables.visitCount)
     .orderBy(desc(sql`COUNT(${orders.id})`));
   return result;
 }

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { trpc } from "@/providers/trpc";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,7 +31,13 @@ const statusLabels: Record<string, string> = {
   cancelled: "Отказана",
 };
 
-const statusOptions = ["pending", "preparing", "ready", "served", "cancelled"];
+const statusOptions = [
+  "pending",
+  "preparing",
+  "ready",
+  "served",
+  "cancelled",
+] as const;
 
 export default function OrdersManager() {
   const [selectedOrder, setSelectedOrder] = useState<number | null>(null);
@@ -40,10 +47,12 @@ export default function OrdersManager() {
 
   const updateStatus = trpc.order.updateStatus.useMutation({
     onSuccess: () => utils.order.list.invalidate(),
+    onError: (e) => toast.error(e.message),
   });
 
   const deleteOrder = trpc.order.delete.useMutation({
     onSuccess: () => utils.order.list.invalidate(),
+    onError: (e) => toast.error(e.message),
   });
 
   const selectedOrderData = orders?.find((o) => o.id === selectedOrder);
@@ -107,6 +116,9 @@ export default function OrdersManager() {
                       key={status}
                       variant={order.status === status ? "default" : "outline"}
                       size="sm"
+                      disabled={updateStatus.isPending}
+                      aria-label={statusLabels[status]}
+                      title={statusLabels[status]}
                       className={
                         order.status === status
                           ? "bg-red-600 hover:bg-red-700 text-white"
@@ -195,7 +207,7 @@ export default function OrdersManager() {
                     <div>
                       <p className="font-medium">{item.productName}</p>
                       <p className="text-sm text-gray-500">
-                        {item.quantity} x {Number(item.unitPrice).toFixed(2)} лв.
+                        {item.quantity} x {Number(item.unitPrice).toFixed(2)} EUR
                       </p>
                       {item.notes && (
                         <p className="text-xs text-gray-500">

@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router";
-import { LayoutDashboard, ArrowRight, QrCode } from "lucide-react";
+import { LayoutDashboard, ArrowRight, QrCode, UtensilsCrossed } from "lucide-react";
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -19,9 +19,27 @@ export default function Landing() {
           </p>
         </div>
 
-        <div
-          className="bg-[#111] rounded-xl border border-[#222] p-5 cursor-pointer hover:border-[#333] transition-colors"
+        <button
+          type="button"
+          onClick={() => navigate("/menu")}
+          className="w-full text-left bg-[#111] rounded-xl border border-[#222] p-5 hover:border-[#333] transition-colors"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-red-600/10 rounded-lg flex items-center justify-center">
+              <UtensilsCrossed className="w-6 h-6 text-red-500" />
+            </div>
+            <div className="flex-1">
+              <p className="font-medium">Разгледай менюто</p>
+              <p className="text-xs text-gray-500">Прегледайте цялото меню онлайн</p>
+            </div>
+            <ArrowRight className="w-5 h-5 text-gray-600" />
+          </div>
+        </button>
+
+        <button
+          type="button"
           onClick={() => navigate("/admin")}
+          className="w-full text-left bg-[#111] rounded-xl border border-[#222] p-5 hover:border-[#333] transition-colors"
         >
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-red-600/10 rounded-lg flex items-center justify-center">
@@ -33,7 +51,7 @@ export default function Landing() {
             </div>
             <ArrowRight className="w-5 h-5 text-gray-600" />
           </div>
-        </div>
+        </button>
 
         <div className="bg-[#111] rounded-xl border border-[#222] p-5">
           <div className="flex items-center gap-4 mb-4">

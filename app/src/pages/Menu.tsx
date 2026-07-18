@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useParams } from "react-router";
+import { toast } from "sonner";
 import { trpc } from "@/providers/trpc";
 import { bgNames } from "@/i18n/bg";
 import { trDescriptions, trNames } from "@/i18n/tr";
@@ -17,11 +19,17 @@ import {
   GlassWater,
   Globe,
   Instagram,
+  Loader2,
   Martini,
+  Minus,
+  Plus,
   RefreshCw,
   Salad,
   Sandwich,
   Search,
+  Send,
+  ShoppingBag,
+  Trash2,
   UtensilsCrossed,
   Wine,
   X,
@@ -38,6 +46,8 @@ type ProductItem = {
   priceEur: string;
   image: string | null;
   images: string[] | null;
+  tags: string[] | null;
+  allergens: string[] | null;
   categoryId: number;
   category?: { name: string } | null;
   isAvailable: boolean;
@@ -45,6 +55,37 @@ type ProductItem = {
 };
 
 type Lang = "bg" | "en" | "tr";
+
+// Product badges (Signature / Vegan / Spicy …) — keys stored in product.tags.
+type BadgeMeta = {
+  label: Record<Lang, string>;
+  className: string;
+};
+const BADGE_META: Record<string, BadgeMeta> = {
+  signature: {
+    label: { bg: "Специалитет", en: "Signature", tr: "Özel" },
+    className: "bg-[#E30614] text-white",
+  },
+  new: {
+    label: { bg: "Ново", en: "New", tr: "Yeni" },
+    className: "bg-amber-400 text-black",
+  },
+  spicy: {
+    label: { bg: "Люто", en: "Spicy", tr: "Acılı" },
+    className: "bg-orange-600 text-white",
+  },
+  vegan: {
+    label: { bg: "Веган", en: "Vegan", tr: "Vegan" },
+    className: "bg-emerald-600 text-white",
+  },
+  vegetarian: {
+    label: { bg: "Вегетарианско", en: "Vegetarian", tr: "Vejetaryen" },
+    className: "bg-emerald-700 text-white",
+  },
+};
+function badgeLabel(key: string, lang: Lang): string {
+  return BADGE_META[key]?.label[lang] ?? key;
+}
 
 const categoryIcon: Record<string, LucideIcon> = {
   Salads: Salad,
@@ -179,6 +220,20 @@ const t = {
     language: "Избор на език",
     loadError: "Менюто не можа да се зареди.",
     retry: "Опитайте отново",
+    add: "Добави",
+    cart: "Кошница",
+    order: "Вашата поръчка",
+    sendOrder: "Изпрати поръчка",
+    sending: "Изпращане…",
+    orderSent: "Поръчката е изпратена в кухнята!",
+    orderError: "Неуспешно изпращане. Опитайте отново.",
+    emptyCart: "Кошницата е празна",
+    total: "Общо",
+    orderNote: "Бележка към поръчката…",
+    table: "Маса",
+    scanToOrder: "Сканирайте QR кода на Вашата маса, за да поръчате.",
+    inCart: "в кошницата",
+    allergens: "Алергени",
   },
   en: {
     tagline: "Steak & Fish · Varna",
@@ -197,6 +252,20 @@ const t = {
     language: "Choose language",
     loadError: "The menu could not be loaded.",
     retry: "Try again",
+    add: "Add",
+    cart: "Cart",
+    order: "Your order",
+    sendOrder: "Send order",
+    sending: "Sending…",
+    orderSent: "Your order was sent to the kitchen!",
+    orderError: "Could not send the order. Try again.",
+    emptyCart: "Your cart is empty",
+    total: "Total",
+    orderNote: "Note to the kitchen…",
+    table: "Table",
+    scanToOrder: "Scan your table's QR code to place an order.",
+    inCart: "in cart",
+    allergens: "Allergens",
   },
   tr: {
     tagline: "Biftek & Balık · Varna",
@@ -215,6 +284,20 @@ const t = {
     language: "Dil seçin",
     loadError: "Menü yüklenemedi.",
     retry: "Tekrar deneyin",
+    add: "Ekle",
+    cart: "Sepet",
+    order: "Siparişiniz",
+    sendOrder: "Siparişi gönder",
+    sending: "Gönderiliyor…",
+    orderSent: "Siparişiniz mutfağa gönderildi!",
+    orderError: "Sipariş gönderilemedi. Tekrar deneyin.",
+    emptyCart: "Sepetiniz boş",
+    total: "Toplam",
+    orderNote: "Mutfağa not…",
+    table: "Masa",
+    scanToOrder: "Sipariş vermek için masanızın QR kodunu okutun.",
+    inCart: "sepette",
+    allergens: "Alerjenler",
   },
 } as const;
 
@@ -361,6 +444,93 @@ export default function Menu() {
     isError: productsError,
     refetch: refetchProducts,
   } = trpc.product.active.useQuery();
+
+  // Per-table ordering context. qrToken comes from /menu/:qrToken (QR scan).
+  const { qrToken } = useParams<{ qrToken: string }>();
+  const { data: table } = trpc.table.byQrToken.useQuery(
+    { qrToken: qrToken ?? "" },
+    { enabled: Boolean(qrToken), staleTime: Infinity, retry: false }
+  );
+  const canOrder = Boolean(table?.id);
+
+  const [cart, setCart] = useState<{ product: ProductItem; quantity: number }[]>(
+    []
+  );
+  const [showCart, setShowCart] = useState(false);
+  const [orderNote, setOrderNote] = useState("");
+  const visitedRef = useRef<string | null>(null);
+
+  const visitMutation = trpc.table.visit.useMutation();
+  const createOrder = trpc.order.create.useMutation({
+    onSuccess: () => {
+      toast.success(s.orderSent);
+      setCart([]);
+      setOrderNote("");
+      setShowCart(false);
+    },
+    onError: () => toast.error(s.orderError),
+  });
+
+  // Record one visit per resolved table token (drives per-table analytics).
+  useEffect(() => {
+    if (!table?.id || !qrToken) return;
+    if (visitedRef.current === qrToken) return;
+    visitedRef.current = qrToken;
+    visitMutation.mutate({ qrToken });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [table?.id, qrToken]);
+
+  const cartCount = useMemo(
+    () => cart.reduce((sum, line) => sum + line.quantity, 0),
+    [cart]
+  );
+  const cartTotal = useMemo(
+    () =>
+      cart.reduce(
+        (sum, line) => sum + Number(line.product.priceEur) * line.quantity,
+        0
+      ),
+    [cart]
+  );
+
+  const addToCart = useCallback((product: ProductItem) => {
+    setCart(prev => {
+      const existing = prev.find(line => line.product.id === product.id);
+      if (existing) {
+        return prev.map(line =>
+          line.product.id === product.id
+            ? { ...line, quantity: Math.min(line.quantity + 1, 99) }
+            : line
+        );
+      }
+      return [...prev, { product, quantity: 1 }];
+    });
+  }, []);
+
+  const changeQty = useCallback((productId: number, delta: number) => {
+    setCart(prev =>
+      prev
+        .map(line =>
+          line.product.id === productId
+            ? { ...line, quantity: line.quantity + delta }
+            : line
+        )
+        .filter(line => line.quantity > 0)
+    );
+  }, []);
+
+  const submitOrder = useCallback(() => {
+    const tableId = table?.id;
+    if (!tableId || cart.length === 0 || createOrder.isPending) return;
+    createOrder.mutate({
+      tableId,
+      items: cart.map(line => ({
+        productId: line.product.id,
+        quantity: line.quantity,
+      })),
+      notes: orderNote.trim() || undefined,
+    });
+  }, [table?.id, cart, orderNote, createOrder]);
 
   const changeLang = useCallback((next: Lang) => {
     setLang(next);
@@ -513,7 +683,7 @@ export default function Menu() {
   }, [selectedProduct]);
 
   useEffect(() => {
-    const modalOpen = showSearch || Boolean(selectedProduct);
+    const modalOpen = showSearch || showCart || Boolean(selectedProduct);
     if (!modalOpen) return;
 
     const previousOverflow = document.body.style.overflow;
@@ -522,6 +692,7 @@ export default function Menu() {
       if (event.key === "Escape") {
         setShowSearch(false);
         setSelectedProduct(null);
+        setShowCart(false);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -529,7 +700,7 @@ export default function Menu() {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [selectedProduct, showSearch]);
+  }, [selectedProduct, showSearch, showCart]);
 
   useEffect(() => {
     document.documentElement.lang = lang;
@@ -616,6 +787,22 @@ export default function Menu() {
             >
               <Search className="h-4 w-4" />
             </button>
+
+            {canOrder && (
+              <button
+                type="button"
+                onClick={() => setShowCart(true)}
+                aria-label={`${s.cart}${cartCount ? `, ${cartCount} ${s.inCart}` : ""}`}
+                className="relative flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.07] backdrop-blur transition-colors hover:bg-white/[0.14]"
+              >
+                <ShoppingBag className="h-4 w-4" />
+                {cartCount > 0 && (
+                  <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#E30614] px-1 text-[10px] font-semibold tabular-nums text-white">
+                    {cartCount}
+                  </span>
+                )}
+              </button>
+            )}
           </div>
         </div>
       </header>
@@ -793,12 +980,15 @@ export default function Menu() {
                         <div className="mb-2 mt-4 h-px bg-gradient-to-r from-[#E30614]/30 to-transparent" />
                       </Reveal>
 
-                      <div className="space-y-1">
+                      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
                         {categoryProducts.map((product, index) => {
                           const customImages = customProductImages(product);
                           const hasCustomImage = customImages.length > 0;
                           const stockImage = stockProductImage(product);
                           const cardImage = customImages[0] ?? stockImage;
+                          const badges = (product.tags ?? []).filter(
+                            tag => BADGE_META[tag]
+                          );
 
                           return (
                             <Reveal
@@ -808,71 +998,66 @@ export default function Menu() {
                               <button
                                 type="button"
                                 onClick={() => setSelectedProduct(product)}
-                                className="group -mx-3 w-[calc(100%+1.5rem)] cursor-pointer rounded-[1.35rem] border border-transparent px-3 py-3.5 text-left transition-colors duration-200 hover:border-white/[0.06] hover:bg-white/[0.035]"
+                                className="group flex h-full w-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] text-left transition-all duration-200 hover:border-white/[0.14] hover:bg-white/[0.05]"
                               >
-                                <span className="flex items-start gap-3.5 md:gap-4">
-                                  <span className="block h-20 w-20 shrink-0 overflow-hidden rounded-[1.1rem] border border-white/[0.08] bg-[#0d0d0d] shadow-lg shadow-black/20 md:h-24 md:w-24">
-                                    <img
-                                      src={cardImage}
-                                      alt={
-                                        hasCustomImage
-                                          ? productName(product)
-                                          : ""
+                                <span className="relative block aspect-square w-full overflow-hidden bg-[#0d0d0d]">
+                                  <img
+                                    src={cardImage}
+                                    alt={
+                                      hasCustomImage ? productName(product) : ""
+                                    }
+                                    aria-hidden={!hasCustomImage}
+                                    width="400"
+                                    height="400"
+                                    loading="lazy"
+                                    decoding="async"
+                                    onError={event => {
+                                      const image = event.currentTarget;
+                                      if (
+                                        hasCustomImage &&
+                                        image.dataset.stockApplied !== "true"
+                                      ) {
+                                        image.dataset.stockApplied = "true";
+                                        image.src = stockImage;
+                                        image.alt = "";
+                                        image.setAttribute("aria-hidden", "true");
+                                        return;
                                       }
-                                      aria-hidden={!hasCustomImage}
-                                      width="96"
-                                      height="96"
-                                      loading="lazy"
-                                      decoding="async"
-                                      onError={event => {
-                                        const image = event.currentTarget;
-                                        if (
-                                          hasCustomImage &&
-                                          image.dataset.stockApplied !== "true"
-                                        ) {
-                                          image.dataset.stockApplied = "true";
-                                          image.src = stockImage;
-                                          image.alt = "";
-                                          image.setAttribute(
-                                            "aria-hidden",
-                                            "true"
-                                          );
-                                          return;
-                                        }
-                                        image.parentElement?.remove();
-                                      }}
-                                      className="menu-photo animate-photo-in h-full w-full object-cover"
-                                    />
-                                  </span>
-                                  <span className="min-w-0 flex-1 pt-0.5">
-                                    <span className="flex items-start justify-between gap-3">
-                                      <span className="font-display text-[18px] leading-[1.3] transition-colors duration-200 group-hover:text-[#FF4D5E] md:text-[19px]">
-                                        {productName(product)}
-                                      </span>
-                                      <span className="flex shrink-0 flex-col items-end">
-                                        <span className="font-display text-lg tabular-nums text-[#FF4D5E] md:text-xl">
-                                          {formatPrice(product.priceEur, lang)}
-                                          <span className="ml-0.5 text-sm">
-                                            €
-                                          </span>
+                                      image.style.visibility = "hidden";
+                                    }}
+                                    className="menu-photo animate-photo-in h-full w-full object-cover"
+                                  />
+                                  <span className="pointer-events-none absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-black/50 to-transparent" />
+                                  {badges.length > 0 && (
+                                    <span className="absolute left-2 top-2 flex flex-wrap gap-1">
+                                      {badges.map(badge => (
+                                        <span
+                                          key={badge}
+                                          className={`rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide shadow-sm ${BADGE_META[badge].className}`}
+                                        >
+                                          {badgeLabel(badge, lang)}
                                         </span>
-                                        <span className="mt-0.5 text-xs tabular-nums text-[#8b8b8b]">
-                                          {formatPrice(product.priceBgn, lang)}{" "}
-                                          {lang === "bg" ? "лв." : "BGN"}
-                                        </span>
-                                      </span>
+                                      ))}
                                     </span>
-                                    <span className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1.5">
-                                      {product.weight && (
-                                        <span className="shrink-0 rounded-full border border-white/[0.08] bg-white/[0.045] px-2 py-1 text-[11px] font-medium tracking-wide text-neutral-300">
-                                          {formatServing(product.weight, lang)}
-                                        </span>
-                                      )}
-                                      {productDescription(product) && (
-                                        <span className="line-clamp-2 min-w-0 flex-1 text-[13px] font-light leading-[1.5] text-[#999] md:text-sm">
-                                          {productDescription(product)}
-                                        </span>
-                                      )}
+                                  )}
+                                </span>
+                                <span className="flex flex-1 flex-col gap-1 p-3">
+                                  <span className="line-clamp-2 font-display text-[15px] leading-tight transition-colors duration-200 group-hover:text-[#FF4D5E] md:text-base">
+                                    {productName(product)}
+                                  </span>
+                                  {product.weight && (
+                                    <span className="text-[11px] tabular-nums text-[#8b8b8b]">
+                                      {formatServing(product.weight, lang)}
+                                    </span>
+                                  )}
+                                  <span className="mt-auto flex items-baseline gap-1.5 pt-1.5">
+                                    <span className="font-display text-lg tabular-nums text-[#FF4D5E]">
+                                      {formatPrice(product.priceEur, lang)}
+                                      <span className="ml-0.5 text-sm">€</span>
+                                    </span>
+                                    <span className="text-[11px] tabular-nums text-[#8b8b8b]">
+                                      {formatPrice(product.priceBgn, lang)}{" "}
+                                      {lang === "bg" ? "лв." : "BGN"}
                                     </span>
                                   </span>
                                 </span>
@@ -1055,32 +1240,44 @@ export default function Menu() {
 
             <div className="space-y-6 px-6 pt-4 md:px-8">
               {sheetImages.length > 0 && (
-                <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-[#111]">
-                  <img
-                    key={sheetImages[imageIndex]}
-                    src={sheetImages[imageIndex]}
-                    alt={sheetUsesStock ? "" : productName(selectedProduct)}
-                    aria-hidden={sheetUsesStock}
-                    width="1200"
-                    height="900"
-                    decoding="async"
-                    onError={event => {
-                      const image = event.currentTarget;
-                      if (
-                        !sheetUsesStock &&
-                        image.dataset.stockApplied !== "true"
-                      ) {
-                        image.dataset.stockApplied = "true";
-                        image.src = stockProductImage(selectedProduct);
-                        image.alt = "";
-                        image.setAttribute("aria-hidden", "true");
-                        return;
-                      }
-                      const wrapper = image.closest("div");
-                      if (wrapper) wrapper.style.display = "none";
-                    }}
-                    className="animate-photo-in h-full w-full object-cover"
-                  />
+                <div className="relative mx-auto flex aspect-square w-full max-w-[19rem] items-center justify-center">
+                  {/* soft glow */}
+                  <div className="absolute inset-2 rounded-full bg-[#E30614]/25 blur-3xl" />
+                  {/* rotating accent ring */}
+                  <div className="plate-ring absolute -inset-1.5 rounded-full opacity-70 blur-[1px]" />
+                  {/* the plate: spins in on open */}
+                  <div
+                    key={`plate-${selectedProduct.id}-${imageIndex}`}
+                    className="animate-plate-in absolute inset-1"
+                  >
+                    <div className="plate-float h-full w-full">
+                      <img
+                        src={sheetImages[imageIndex]}
+                        alt={sheetUsesStock ? "" : productName(selectedProduct)}
+                        aria-hidden={sheetUsesStock}
+                        width="900"
+                        height="900"
+                        decoding="async"
+                        onError={event => {
+                          const image = event.currentTarget;
+                          if (
+                            !sheetUsesStock &&
+                            image.dataset.stockApplied !== "true"
+                          ) {
+                            image.dataset.stockApplied = "true";
+                            image.src = stockProductImage(selectedProduct);
+                            image.alt = "";
+                            image.setAttribute("aria-hidden", "true");
+                            return;
+                          }
+                          const wrapper = image.closest("div");
+                          if (wrapper) wrapper.style.display = "none";
+                        }}
+                        className="h-full w-full rounded-full border border-white/10 object-cover shadow-2xl shadow-black/60"
+                      />
+                    </div>
+                  </div>
+
                   {sheetImages.length > 1 && (
                     <>
                       <button
@@ -1092,7 +1289,7 @@ export default function Menu() {
                           )
                         }
                         aria-label="Previous photo"
-                        className="absolute left-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 backdrop-blur transition-colors hover:bg-black/80"
+                        className="absolute -left-1 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 backdrop-blur transition-colors hover:bg-black/80"
                       >
                         <ChevronLeft className="h-4 w-4" />
                       </button>
@@ -1102,11 +1299,11 @@ export default function Menu() {
                           setImageIndex((imageIndex + 1) % sheetImages.length)
                         }
                         aria-label="Next photo"
-                        className="absolute right-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 backdrop-blur transition-colors hover:bg-black/80"
+                        className="absolute -right-1 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 backdrop-blur transition-colors hover:bg-black/80"
                       >
                         <ChevronRight className="h-4 w-4" />
                       </button>
-                      <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
+                      <div className="absolute -bottom-1 left-1/2 z-10 flex -translate-x-1/2 gap-1.5">
                         {sheetImages.map((_, index) => (
                           <span
                             key={index}
@@ -1138,6 +1335,24 @@ export default function Menu() {
                       {stripTrailingServing(selectedProduct.nameEn)}
                     </p>
                   )}
+                {(() => {
+                  const badges = (selectedProduct.tags ?? []).filter(
+                    tag => BADGE_META[tag]
+                  );
+                  if (!badges.length) return null;
+                  return (
+                    <span className="mt-3 flex flex-wrap gap-1.5">
+                      {badges.map(badge => (
+                        <span
+                          key={badge}
+                          className={`rounded-md px-2 py-1 text-[11px] font-semibold uppercase tracking-wide ${BADGE_META[badge].className}`}
+                        >
+                          {badgeLabel(badge, lang)}
+                        </span>
+                      ))}
+                    </span>
+                  );
+                })()}
               </div>
 
               {productDescription(selectedProduct) && (
@@ -1155,6 +1370,25 @@ export default function Menu() {
                 </div>
               )}
 
+              {selectedProduct.allergens &&
+                selectedProduct.allergens.length > 0 && (
+                  <div>
+                    <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.2em] text-[#8a8a8a]">
+                      {s.allergens}
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {selectedProduct.allergens.map(allergen => (
+                        <span
+                          key={allergen}
+                          className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-xs text-neutral-300"
+                        >
+                          {allergen}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
               <div className="h-px bg-[#1c1c1c]" />
               <div className="flex items-end justify-between">
                 <span className="flex items-baseline gap-1 font-display text-4xl tabular-nums text-[#FF4D5E]">
@@ -1166,7 +1400,182 @@ export default function Menu() {
                   {lang === "bg" ? "лв." : "BGN"}
                 </span>
               </div>
+
+              {canOrder &&
+                (() => {
+                  const line = cart.find(
+                    item => item.product.id === selectedProduct.id
+                  );
+                  if (!line) {
+                    return (
+                      <button
+                        type="button"
+                        onClick={() => addToCart(selectedProduct)}
+                        className="flex min-h-[3.25rem] w-full items-center justify-center gap-2 rounded-2xl bg-[#E30614] text-base font-medium text-white transition-transform hover:scale-[1.02] active:scale-95"
+                      >
+                        <Plus className="h-5 w-5" />
+                        {s.add}
+                      </button>
+                    );
+                  }
+                  return (
+                    <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] p-2">
+                      <button
+                        type="button"
+                        onClick={() => changeQty(selectedProduct.id, -1)}
+                        aria-label="-"
+                        className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/[0.07] transition-colors hover:bg-white/[0.14]"
+                      >
+                        <Minus className="h-4 w-4" />
+                      </button>
+                      <span className="font-display text-xl tabular-nums">
+                        {line.quantity}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => changeQty(selectedProduct.id, 1)}
+                        aria-label="+"
+                        className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#E30614] transition-colors hover:bg-[#c40512]"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </button>
+                    </div>
+                  );
+                })()}
             </div>
+          </div>
+        </div>
+      )}
+
+      {showCart && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={s.order}
+          className="fixed inset-0 z-[70]"
+        >
+          <button
+            type="button"
+            aria-label={s.close}
+            className="animate-fade-in absolute inset-0 h-full w-full cursor-default bg-black/75 backdrop-blur-sm"
+            onClick={() => setShowCart(false)}
+          />
+          <div className="animate-sheet-up absolute bottom-0 left-0 right-0 mx-auto flex max-h-[90svh] max-w-xl flex-col rounded-t-[2rem] border-t border-[#262626] bg-[#0b0b0b] shadow-2xl">
+            <div className="sticky top-0 z-10 flex items-center justify-between rounded-t-[2rem] border-b border-[#161616] bg-[#0b0b0b] px-6 pb-3 pt-4">
+              <div>
+                <h2 className="font-display text-2xl">{s.order}</h2>
+                {table?.name && (
+                  <p className="mt-0.5 text-xs text-[#8a8a8a]">
+                    {s.table}: {table.name}
+                  </p>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowCart(false)}
+                aria-label={s.close}
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.07] transition-colors hover:bg-white/[0.14]"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-6 py-4">
+              {cart.length === 0 ? (
+                <p className="py-14 text-center text-sm text-[#8a8a8a]">
+                  {s.emptyCart}
+                </p>
+              ) : (
+                <ul className="space-y-3">
+                  {cart.map(line => (
+                    <li
+                      key={line.product.id}
+                      className="flex items-center gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-3"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-display text-[15px]">
+                          {productName(line.product)}
+                        </p>
+                        <p className="mt-0.5 text-xs tabular-nums text-[#FF4D5E]">
+                          {formatPrice(line.product.priceEur, lang)}€
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => changeQty(line.product.id, -1)}
+                          aria-label="-"
+                          className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/[0.07] transition-colors hover:bg-white/[0.14]"
+                        >
+                          <Minus className="h-3.5 w-3.5" />
+                        </button>
+                        <span className="w-6 text-center font-display tabular-nums">
+                          {line.quantity}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => changeQty(line.product.id, 1)}
+                          aria-label="+"
+                          className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/[0.07] transition-colors hover:bg-white/[0.14]"
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => changeQty(line.product.id, -line.quantity)}
+                        aria-label={s.close}
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[#8a8a8a] transition-colors hover:bg-white/[0.06] hover:text-[#FF4D5E]"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {cart.length > 0 && (
+                <textarea
+                  value={orderNote}
+                  onChange={event => setOrderNote(event.target.value)}
+                  placeholder={s.orderNote}
+                  maxLength={1000}
+                  rows={2}
+                  className="mt-4 w-full resize-none rounded-2xl border border-[#2a2a2a] bg-[#111] p-3 text-sm text-white placeholder:text-[#8a8a8a] focus:border-[#E30614]/60 focus:outline-none"
+                />
+              )}
+            </div>
+
+            {cart.length > 0 && (
+              <div className="border-t border-[#161616] px-6 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-4">
+                <div className="mb-3 flex items-baseline justify-between">
+                  <span className="text-sm uppercase tracking-wider text-[#8a8a8a]">
+                    {s.total}
+                  </span>
+                  <span className="font-display text-2xl tabular-nums text-[#FF4D5E]">
+                    {formatPrice(cartTotal.toFixed(2), lang)}€
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={submitOrder}
+                  disabled={createOrder.isPending}
+                  className="flex min-h-[3.25rem] w-full items-center justify-center gap-2 rounded-2xl bg-[#E30614] text-base font-medium text-white transition-transform hover:scale-[1.02] active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {createOrder.isPending ? (
+                    <>
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      {s.sending}
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-5 w-5" />
+                      {s.sendOrder}
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

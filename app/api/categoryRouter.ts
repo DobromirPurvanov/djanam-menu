@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createRouter, publicQuery } from "./middleware";
+import { createRouter, publicQuery, adminProcedure } from "./middleware";
 import {
   findAllCategories,
   findActiveCategories,
@@ -18,11 +18,11 @@ export const categoryRouter = createRouter({
     .input(z.object({ id: z.number() }))
     .query(({ input }) => findCategoryById(input.id)),
 
-  create: publicQuery
+  create: adminProcedure
     .input(z.object({ name: z.string().min(1), sortOrder: z.number().optional() }))
     .mutation(({ input }) => createCategory(input)),
 
-  update: publicQuery
+  update: adminProcedure
     .input(
       z.object({
         id: z.number(),
@@ -35,7 +35,7 @@ export const categoryRouter = createRouter({
     )
     .mutation(({ input }) => updateCategory(input.id, input.data)),
 
-  delete: publicQuery
+  delete: adminProcedure
     .input(z.object({ id: z.number() }))
     .mutation(({ input }) => deleteCategory(input.id)),
 });

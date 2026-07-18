@@ -11,4 +11,8 @@ USE djanam_menu;
 -- 1. Create database: CREATE DATABASE djanam_menu;
 -- 2. Set permissions: GRANT ALL ON djanam_menu.* TO 'your_user'@'%';
 -- 3. Run: npm run db:push
--- 4. Seed: curl -X POST http://localhost:3000/api/trpc/seed.run -H 'Content-Type: application/json' -d '{"json":{}}'
+-- 4. Seed (admin token required): curl -X POST http://localhost:3000/api/trpc/seed.run -H 'Content-Type: application/json' -H 'x-admin-token: YOUR_ADMIN_TOKEN' -d '{"json":{}}'
+
+-- Migration for existing databases (product badges + allergens).
+-- `npm run db:push` applies this automatically; run manually only if pushing is not possible:
+-- ALTER TABLE products ADD COLUMN tags JSON NULL, ADD COLUMN allergens JSON NULL;
