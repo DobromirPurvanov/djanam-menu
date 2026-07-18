@@ -16,3 +16,6 @@ USE djanam_menu;
 -- Migration for existing databases (product badges + allergens).
 -- `npm run db:push` applies this automatically; run manually only if pushing is not possible:
 -- ALTER TABLE products ADD COLUMN tags JSON NULL, ADD COLUMN allergens JSON NULL;
+
+-- ALTER: service requests (call waiter / bill) — прилага се от npm run db:push
+-- CREATE TABLE service_requests (id, table_id, type, status DEFAULT 'pending', created_at);

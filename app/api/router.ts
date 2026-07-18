@@ -4,6 +4,7 @@ import { categoryRouter } from "./categoryRouter";
 import { productRouter } from "./productRouter";
 import { orderRouter } from "./orderRouter";
 import { seedRouter } from "./seedRouter";
+import { serviceRouter } from "./serviceRouter";
 
 export const appRouter = createRouter({
   ping: publicQuery.query(() => ({ ok: true, ts: Date.now() })),
@@ -12,6 +13,7 @@ export const appRouter = createRouter({
   product: productRouter,
   order: orderRouter,
   seed: seedRouter,
+  service: serviceRouter,
 });
 
 export type AppRouter = typeof appRouter;

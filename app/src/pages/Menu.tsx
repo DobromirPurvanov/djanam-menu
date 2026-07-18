@@ -6,6 +6,7 @@ import { bgNames } from "@/i18n/bg";
 import { trDescriptions, trNames } from "@/i18n/tr";
 import {
   Beef,
+  Bell,
   Bird,
   CakeSlice,
   Check,
@@ -19,16 +20,19 @@ import {
   GlassWater,
   Globe,
   Instagram,
+  LayoutGrid,
   Loader2,
   Martini,
   Minus,
   Plus,
+  Receipt,
   RefreshCw,
   Salad,
   Sandwich,
   Search,
   Send,
   ShoppingBag,
+  SlidersHorizontal,
   Trash2,
   UtensilsCrossed,
   Wine,
@@ -54,7 +58,7 @@ type ProductItem = {
   sortOrder: number;
 };
 
-type Lang = "bg" | "en" | "tr";
+type Lang = "bg" | "en" | "tr" | "ru";
 
 // Product badges (Signature / Vegan / Spicy …) — keys stored in product.tags.
 type BadgeMeta = {
@@ -63,23 +67,23 @@ type BadgeMeta = {
 };
 const BADGE_META: Record<string, BadgeMeta> = {
   signature: {
-    label: { bg: "Специалитет", en: "Signature", tr: "Özel" },
+    label: { bg: "Специалитет", en: "Signature", tr: "Özel", ru: "Фирменное" },
     className: "bg-[#E30614] text-white",
   },
   new: {
-    label: { bg: "Ново", en: "New", tr: "Yeni" },
+    label: { bg: "Ново", en: "New", tr: "Yeni", ru: "Новинка" },
     className: "bg-amber-400 text-black",
   },
   spicy: {
-    label: { bg: "Люто", en: "Spicy", tr: "Acılı" },
+    label: { bg: "Люто", en: "Spicy", tr: "Acılı", ru: "Острое" },
     className: "bg-orange-600 text-white",
   },
   vegan: {
-    label: { bg: "Веган", en: "Vegan", tr: "Vegan" },
+    label: { bg: "Веган", en: "Vegan", tr: "Vegan", ru: "Веган" },
     className: "bg-emerald-600 text-white",
   },
   vegetarian: {
-    label: { bg: "Вегетарианско", en: "Vegetarian", tr: "Vejetaryen" },
+    label: { bg: "Вегетарианско", en: "Vegetarian", tr: "Vejetaryen", ru: "Вегетарианское" },
     className: "bg-emerald-700 text-white",
   },
 };
@@ -177,6 +181,28 @@ const categorySubtitle: Record<Lang, Record<string, string>> = {
     "Fresh Juices": "Taze sıkılmış",
     "Hot Drinks": "Kahve ve çay",
   },
+  ru: {
+    Salads: "Свежие сочетания",
+    Appetizer: "Идеальное начало",
+    Bread: "Свежий и тёплый",
+    Starters: "Начните со вкусом",
+    Beef: "Отборный Black Angus",
+    Lamb: "Нежное и ароматное",
+    Poultry: "Тщательно отобрано",
+    Fish: "Свежий улов",
+    Desserts: "Сладкий финал",
+    Whiskey: "Выдержанная коллекция",
+    "Gin & Rum": "Классика и новинки",
+    Vodka: "Премиум марки",
+    "Anise Drinks": "Средиземноморская классика",
+    Rakia: "Балканская традиция",
+    Liquors: "Сладкие и ароматные",
+    Tequila: "100% агава",
+    Beer: "Идеально охлаждённое",
+    "Soft Drinks": "Освежающие",
+    "Fresh Juices": "Свежевыжатые",
+    "Hot Drinks": "Кофе и чай",
+  },
 };
 
 const categoryNameTr: Record<string, string> = {
@@ -200,6 +226,29 @@ const categoryNameTr: Record<string, string> = {
   "Soft Drinks": "Alkolsüz İçecekler",
   "Fresh Juices": "Taze Sıkma",
   "Hot Drinks": "Sıcak İçecekler",
+};
+
+const categoryNameRu: Record<string, string> = {
+  Salads: "Салаты",
+  Appetizer: "Закуски",
+  Bread: "Хлеб",
+  Starters: "Предзакуски",
+  Beef: "Говядина",
+  Lamb: "Баранина",
+  Poultry: "Птица",
+  Fish: "Рыба",
+  Desserts: "Десерты",
+  Whiskey: "Виски",
+  "Gin & Rum": "Джин и Ром",
+  Vodka: "Водка",
+  "Anise Drinks": "Анисовые напитки",
+  Rakia: "Ракия",
+  Liquors: "Ликёры",
+  Tequila: "Текила",
+  Beer: "Пиво",
+  "Soft Drinks": "Безалкогольные",
+  "Fresh Juices": "Свежие соки",
+  "Hot Drinks": "Горячие напитки",
 };
 
 const t = {
@@ -234,6 +283,12 @@ const t = {
     scanToOrder: "Сканирайте QR кода на Вашата маса, за да поръчате.",
     inCart: "в кошницата",
     allergens: "Алергени",
+    filters: "Филтри",
+    allCategories: "Всички категории",
+    callWaiter: "Извикай сервитьор",
+    requestBill: "Сметка",
+    serviceSent: "Сервитьорът е уведомен!",
+    serviceError: "Възникна грешка. Опитайте отново.",
   },
   en: {
     tagline: "Steak & Fish · Varna",
@@ -266,6 +321,12 @@ const t = {
     scanToOrder: "Scan your table's QR code to place an order.",
     inCart: "in cart",
     allergens: "Allergens",
+    filters: "Filters",
+    allCategories: "All categories",
+    callWaiter: "Call waiter",
+    requestBill: "Bill",
+    serviceSent: "The waiter has been notified!",
+    serviceError: "Something went wrong. Try again.",
   },
   tr: {
     tagline: "Biftek & Balık · Varna",
@@ -298,6 +359,50 @@ const t = {
     scanToOrder: "Sipariş vermek için masanızın QR kodunu okutun.",
     inCart: "sepette",
     allergens: "Alerjenler",
+    filters: "Filtreler",
+    allCategories: "Tüm kategoriler",
+    callWaiter: "Garson çağır",
+    requestBill: "Hesap",
+    serviceSent: "Garson bilgilendirildi!",
+    serviceError: "Bir hata oluştu. Tekrar deneyin.",
+  },
+  ru: {
+    tagline: "Стейк & рыба · Варна",
+    heroSub: "Каждая деталь для вашего удовольствия",
+    scroll: "Смотреть меню",
+    menu: "Меню",
+    categories: "Категории",
+    search: "Поиск по меню…",
+    noResults: "Ничего не найдено. Попробуйте другой запрос.",
+    items: "позиций",
+    shareNight: "Поделитесь вечером",
+    stayLoop: "Оставайтесь с нами",
+    tagUs: "Отметьте нас в истории — возможно, получите сюрприз",
+    weight: "Порция",
+    close: "Закрыть",
+    language: "Выбор языка",
+    loadError: "Не удалось загрузить меню.",
+    retry: "Повторить",
+    add: "Добавить",
+    cart: "Корзина",
+    order: "Ваш заказ",
+    sendOrder: "Отправить заказ",
+    sending: "Отправка…",
+    orderSent: "Заказ отправлен на кухню!",
+    orderError: "Не удалось отправить. Попробуйте снова.",
+    emptyCart: "Корзина пуста",
+    total: "Итого",
+    orderNote: "Примечание к заказу…",
+    table: "Стол",
+    scanToOrder: "Отсканируйте QR-код вашего стола, чтобы сделать заказ.",
+    inCart: "в корзине",
+    allergens: "Аллергены",
+    filters: "Фильтры",
+    allCategories: "Все категории",
+    callWaiter: "Позвать официанта",
+    requestBill: "Счёт",
+    serviceSent: "Официант уведомлён!",
+    serviceError: "Произошла ошибка. Попробуйте снова.",
   },
 } as const;
 
@@ -309,6 +414,7 @@ const unitLabel: Record<Lang, { g: string; ml: string; l: string }> = {
   bg: { g: "г", ml: "мл", l: "л" },
   en: { g: "g", ml: "ml", l: "l" },
   tr: { g: "g", ml: "ml", l: "l" },
+  ru: { g: "г", ml: "мл", l: "л" },
 };
 
 const priceFormatter: Record<Lang, Intl.NumberFormat> = {
@@ -321,6 +427,10 @@ const priceFormatter: Record<Lang, Intl.NumberFormat> = {
     maximumFractionDigits: 2,
   }),
   tr: new Intl.NumberFormat("tr-TR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }),
+  ru: new Intl.NumberFormat("ru-RU", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }),
@@ -373,49 +483,13 @@ function stockProductImage(product: ProductItem): string {
   return `${PRODUCT_IMAGE_BASE}/${productImageSlug(product.name)}.jpg`;
 }
 
-function Reveal({
-  children,
-  className = "",
-  delay = 0,
-}: {
-  children: React.ReactNode;
-  className?: string;
-  delay?: number;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const element = ref.current;
-    if (!element) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          element.classList.add("is-visible");
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.08 }
-    );
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, []);
-
-  return (
-    <div
-      ref={ref}
-      className={`reveal ${className}`}
-      style={delay ? { transitionDelay: `${delay}ms` } : undefined}
-    >
-      {children}
-    </div>
-  );
-}
-
 export default function Menu() {
   const [lang, setLang] = useState<Lang>(() => {
     try {
       const saved = localStorage.getItem("djanam-lang");
-      return saved === "en" || saved === "tr" ? saved : "bg";
+      return saved === "en" || saved === "tr" || saved === "ru"
+        ? saved
+        : "bg";
     } catch {
       return "bg";
     }
@@ -430,6 +504,7 @@ export default function Menu() {
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [headerSolid, setHeaderSolid] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const tabBarRef = useRef<HTMLDivElement>(null);
   const s = t[lang];
 
   const {
@@ -458,6 +533,9 @@ export default function Menu() {
   );
   const [showCart, setShowCart] = useState(false);
   const [orderNote, setOrderNote] = useState("");
+  const [showCategories, setShowCategories] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const visitedRef = useRef<string | null>(null);
 
   const visitMutation = trpc.table.visit.useMutation();
@@ -470,6 +548,24 @@ export default function Menu() {
     },
     onError: () => toast.error(s.orderError),
   });
+
+  const serviceRequest = trpc.service.create.useMutation({
+    onSuccess: () => toast.success(s.serviceSent),
+    onError: () => toast.error(s.serviceError),
+  });
+  const callService = useCallback(
+    (type: "waiter" | "bill") => {
+      if (!qrToken || serviceRequest.isPending) return;
+      serviceRequest.mutate({ qrToken, type });
+    },
+    [qrToken, serviceRequest]
+  );
+
+  const toggleFilter = useCallback((key: string) => {
+    setActiveFilters(prev =>
+      prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+    );
+  }, []);
 
   // Record one visit per resolved table token (drives per-table analytics).
   useEffect(() => {
@@ -547,7 +643,7 @@ export default function Menu() {
       const translatedName =
         lang === "tr"
           ? trNames[product.name] || product.nameEn || product.name
-          : lang === "en"
+          : lang === "en" || lang === "ru"
             ? product.nameEn || product.name
             : bgNames[product.name] || product.name;
       return stripTrailingServing(translatedName);
@@ -562,7 +658,7 @@ export default function Menu() {
       const bg = parts[0];
       const en = parts.length > 1 ? parts.slice(1).join(" / ") : null;
       if (lang === "bg") return bg;
-      if (lang === "en") return en ?? bg;
+      if (lang === "en" || lang === "ru") return en ?? bg;
       return trDescriptions[product.name] ?? en ?? bg;
     },
     [lang]
@@ -572,16 +668,33 @@ export default function Menu() {
     (full: string) => {
       const names = splitCatName(full);
       if (lang === "tr") return categoryNameTr[names.en] || names.en;
+      if (lang === "ru") return categoryNameRu[names.en] || names.en;
       return lang === "en" ? names.en : names.bg;
     },
     [lang]
   );
 
+  // Badges that actually occur in the menu — used for the filter controls.
+  const availableBadges = useMemo(() => {
+    const present = new Set<string>();
+    for (const product of (products as ProductItem[] | undefined) ?? []) {
+      for (const tag of product.tags ?? []) {
+        if (BADGE_META[tag]) present.add(tag);
+      }
+    }
+    return Object.keys(BADGE_META).filter(key => present.has(key));
+  }, [products]);
+
   const filteredProducts = useMemo(() => {
-    const list = (products as ProductItem[] | undefined) ?? [];
-    const query = searchQuery
-      .trim()
-      .toLocaleLowerCase(lang === "tr" ? "tr" : "bg");
+    let list = (products as ProductItem[] | undefined) ?? [];
+
+    if (activeFilters.length > 0) {
+      list = list.filter(product =>
+        (product.tags ?? []).some(tag => activeFilters.includes(tag))
+      );
+    }
+
+    const query = searchQuery.trim().toLocaleLowerCase(lang);
     if (!query) return list;
 
     return list.filter(product => {
@@ -595,10 +708,10 @@ export default function Menu() {
       ]
         .filter(Boolean)
         .join(" ")
-        .toLocaleLowerCase(lang === "tr" ? "tr" : "bg");
+        .toLocaleLowerCase(lang);
       return searchable.includes(query);
     });
-  }, [lang, productDescription, products, searchQuery]);
+  }, [lang, productDescription, products, searchQuery, activeFilters]);
 
   const productsByCategory = useMemo(() => {
     const grouped: Record<number, ProductItem[]> = {};
@@ -636,13 +749,31 @@ export default function Menu() {
   };
 
   const scrollToCategory = (categoryId: number) => {
+    const el = document.getElementById(`cat-section-${categoryId}`);
+    if (!el) return;
+    // Offset for the fixed header (64px) + sticky tab bar (~56px).
+    const targetY = window.scrollY + el.getBoundingClientRect().top - 116;
     const reduceMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)"
     ).matches;
-    document.getElementById(`cat-section-${categoryId}`)?.scrollIntoView({
-      behavior: reduceMotion ? "auto" : "smooth",
-      block: "start",
-    });
+    // Native smooth scroll is unreliable under `overflow-x: clip`, so animate
+    // the window manually with requestAnimationFrame (also respects the offset).
+    if (reduceMotion) {
+      window.scrollTo(0, targetY);
+      return;
+    }
+    const startY = window.scrollY;
+    const distance = targetY - startY;
+    const duration = 480;
+    const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
+    let startTime: number | null = null;
+    const step = (now: number) => {
+      if (startTime === null) startTime = now;
+      const progress = Math.min((now - startTime) / duration, 1);
+      window.scrollTo(0, startY + distance * easeOutCubic(progress));
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
   };
 
   useEffect(() => {
@@ -666,11 +797,27 @@ export default function Menu() {
           );
         }
       },
-      { rootMargin: "-18% 0px -68% 0px" }
+      // Top offset matches the fixed header (64px) + sticky tab bar (~52px)
+      // so the tapped/scrolled category is the one highlighted as active.
+      { rootMargin: "-118px 0px -65% 0px" }
     );
     sections.forEach(section => observer.observe(section));
     return () => observer.disconnect();
   }, [categoryOrder]);
+
+  // Keep the active category chip centered in the sticky tab bar.
+  useEffect(() => {
+    const bar = tabBarRef.current;
+    if (!bar || activeCategory == null) return;
+    const chip = bar.querySelector<HTMLElement>(
+      `[data-cat="${activeCategory}"]`
+    );
+    if (!chip) return;
+    bar.scrollTo({
+      left: chip.offsetLeft - bar.clientWidth / 2 + chip.clientWidth / 2,
+      behavior: "smooth",
+    });
+  }, [activeCategory]);
 
   useEffect(() => {
     if (showSearch) {
@@ -683,7 +830,12 @@ export default function Menu() {
   }, [selectedProduct]);
 
   useEffect(() => {
-    const modalOpen = showSearch || showCart || Boolean(selectedProduct);
+    const modalOpen =
+      showSearch ||
+      showCart ||
+      showCategories ||
+      showFilters ||
+      Boolean(selectedProduct);
     if (!modalOpen) return;
 
     const previousOverflow = document.body.style.overflow;
@@ -693,6 +845,8 @@ export default function Menu() {
         setShowSearch(false);
         setSelectedProduct(null);
         setShowCart(false);
+        setShowCategories(false);
+        setShowFilters(false);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -700,7 +854,7 @@ export default function Menu() {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [selectedProduct, showSearch, showCart]);
+  }, [selectedProduct, showSearch, showCart, showCategories, showFilters]);
 
   useEffect(() => {
     document.documentElement.lang = lang;
@@ -708,7 +862,7 @@ export default function Menu() {
   }, [lang, s.menu]);
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#050505] text-[#f5f2ec]">
+    <div className="min-h-screen overflow-x-clip bg-[#050505] text-[#f5f2ec]">
       <header
         className={`fixed inset-x-0 top-0 z-50 border-b transition-all duration-300 ${
           headerSolid
@@ -758,6 +912,7 @@ export default function Menu() {
                         ["bg", "Български"],
                         ["en", "English"],
                         ["tr", "Türkçe"],
+                        ["ru", "Русский"],
                       ] as [Lang, string][]
                     ).map(([code, label]) => (
                       <button
@@ -787,6 +942,22 @@ export default function Menu() {
             >
               <Search className="h-4 w-4" />
             </button>
+
+            {availableBadges.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowFilters(true)}
+                aria-label={s.filters}
+                className="relative flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.07] backdrop-blur transition-colors hover:bg-white/[0.14]"
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                {activeFilters.length > 0 && (
+                  <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#E30614] px-1 text-[10px] font-semibold tabular-nums text-white">
+                    {activeFilters.length}
+                  </span>
+                )}
+              </button>
+            )}
 
             {canOrder && (
               <button
@@ -827,29 +998,21 @@ export default function Menu() {
             className="animate-hero-glow absolute left-1/2 top-1/2 h-[26rem] w-[26rem] rounded-full blur-[130px]"
             style={{ backgroundColor: ACCENT }}
           />
-          <div className="relative px-6 text-center">
-            <Reveal>
-              <img
-                src="./bull-icon.png"
-                alt=""
-                className="mx-auto mb-7 h-20 w-20 object-contain"
-              />
-            </Reveal>
-            <Reveal delay={100}>
-              <p className="mb-5 text-[11px] uppercase tracking-[0.4em] text-[#FF4D5E]">
-                {s.tagline}
-              </p>
-            </Reveal>
-            <Reveal delay={180}>
-              <h1 className="font-display text-6xl leading-none tracking-wide md:text-8xl">
-                Djanam
-              </h1>
-            </Reveal>
-            <Reveal delay={260}>
-              <p className="mt-5 text-sm font-light tracking-wide text-neutral-400">
-                {s.heroSub}
-              </p>
-            </Reveal>
+          <div className="animate-hero-in relative px-6 text-center">
+            <img
+              src="./bull-icon.png"
+              alt=""
+              className="mx-auto mb-7 h-20 w-20 object-contain"
+            />
+            <p className="mb-5 text-[11px] uppercase tracking-[0.4em] text-[#FF4D5E]">
+              {s.tagline}
+            </p>
+            <h1 className="font-display text-6xl leading-none tracking-wide md:text-8xl">
+              Djanam
+            </h1>
+            <p className="mt-5 text-sm font-light tracking-wide text-neutral-400">
+              {s.heroSub}
+            </p>
           </div>
           <a
             href="#menu-content"
@@ -864,50 +1027,55 @@ export default function Menu() {
 
         <div
           id="menu-content"
-          className="mx-auto max-w-7xl scroll-mt-20 px-5 pb-36 pt-4 md:px-8 lg:pb-24"
+          className="mx-auto max-w-7xl scroll-mt-20 px-5 pb-16 pt-4 md:px-8"
         >
-          <div className="lg:grid lg:grid-cols-[230px_minmax(0,1fr)] lg:gap-14">
-            <aside className="hidden lg:block">
-              <div className="sticky top-24 rounded-3xl border border-white/[0.07] bg-white/[0.025] p-3">
-                <p className="px-3 pb-3 pt-2 text-[10px] font-medium uppercase tracking-[0.3em] text-[#8a8a8a]">
-                  {s.categories}
-                </p>
-                <nav aria-label={s.categories} className="space-y-1">
-                  {categoryOrder.map(category => {
-                    const names = splitCatName(category.name);
-                    const Icon = categoryIcon[names.en] || UtensilsCrossed;
-                    const isActive = activeCategory === category.id;
-                    return (
-                      <button
-                        type="button"
-                        key={category.id}
-                        onClick={() => scrollToCategory(category.id)}
-                        className={`flex min-h-11 w-full items-center gap-3 rounded-2xl px-3 text-left text-sm transition-colors ${
-                          isActive
-                            ? "bg-[#E30614] text-white"
-                            : "text-neutral-400 hover:bg-white/[0.06] hover:text-white"
-                        }`}
-                      >
-                        <Icon className="h-4 w-4 shrink-0" />
-                        <span className="truncate">
-                          {categoryName(category.name)}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </nav>
+          {!dataLoading && !dataError && categoryOrder.length > 0 && (
+            <nav
+              aria-label={s.categories}
+              className="sticky top-16 z-40 -mx-5 mb-3 flex items-center gap-2 border-b border-white/[0.06] bg-[#050505]/95 px-5 backdrop-blur-xl md:-mx-8 md:px-8"
+            >
+              <button
+                type="button"
+                onClick={() => setShowCategories(true)}
+                aria-label={s.allCategories}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-neutral-300 transition-colors hover:bg-white/[0.12]"
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </button>
+              <div
+                ref={tabBarRef}
+                className="scrollbar-hide flex flex-1 gap-2 overflow-x-auto py-3"
+              >
+                {categoryOrder.map(category => {
+                  const isActive = activeCategory === category.id;
+                  return (
+                    <button
+                      type="button"
+                      key={category.id}
+                      data-cat={category.id}
+                      onClick={() => scrollToCategory(category.id)}
+                      className={`shrink-0 rounded-full px-4 py-2 text-sm transition-colors ${
+                        isActive
+                          ? "bg-[#E30614] font-medium text-white"
+                          : "border border-white/10 bg-white/[0.03] text-neutral-400 hover:bg-white/[0.08] hover:text-white"
+                      }`}
+                    >
+                      {categoryName(category.name)}
+                    </button>
+                  );
+                })}
               </div>
-            </aside>
+            </nav>
+          )}
 
-            <div className="mx-auto w-full max-w-3xl">
-              <Reveal className="pb-2 pt-4">
-                <div className="flex items-center gap-4">
-                  <h2 className="text-[11px] font-medium uppercase tracking-[0.35em] text-[#FF4D5E]">
-                    {s.menu}
-                  </h2>
-                  <div className="h-px flex-1 bg-gradient-to-r from-[#2a2a2a] to-transparent" />
-                </div>
-              </Reveal>
+          <div>
+            <div className="mx-auto w-full max-w-4xl">
+              <div className="flex items-center gap-4 pb-2 pt-1">
+                <h2 className="text-[11px] font-medium uppercase tracking-[0.35em] text-[#FF4D5E]">
+                  {s.menu}
+                </h2>
+                <div className="h-px flex-1 bg-gradient-to-r from-[#2a2a2a] to-transparent" />
+              </div>
 
               {dataLoading && (
                 <div aria-label="Loading menu" className="space-y-10 py-10">
@@ -954,10 +1122,9 @@ export default function Menu() {
                     <section
                       key={category.id}
                       id={`cat-section-${category.id}`}
-                      className="scroll-mt-24 pt-10"
+                      className="scroll-mt-32 pt-8"
                     >
-                      <Reveal>
-                        <div className="mb-1 flex items-end justify-between gap-4">
+                      <div className="mb-1 flex items-end justify-between gap-4">
                           <div className="flex items-center gap-3.5">
                             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#E30614]/30 bg-[#E30614]/[0.08]">
                               <Icon className="h-[18px] w-[18px] text-[#FF4D5E]" />
@@ -977,11 +1144,10 @@ export default function Menu() {
                             {categoryProducts.length} {s.items}
                           </span>
                         </div>
-                        <div className="mb-2 mt-4 h-px bg-gradient-to-r from-[#E30614]/30 to-transparent" />
-                      </Reveal>
+                      <div className="mb-2 mt-4 h-px bg-gradient-to-r from-[#E30614]/30 to-transparent" />
 
                       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
-                        {categoryProducts.map((product, index) => {
+                        {categoryProducts.map(product => {
                           const customImages = customProductImages(product);
                           const hasCustomImage = customImages.length > 0;
                           const stockImage = stockProductImage(product);
@@ -991,15 +1157,12 @@ export default function Menu() {
                           );
 
                           return (
-                            <Reveal
+                            <button
                               key={product.id}
-                              delay={Math.min(index * 30, 150)}
+                              type="button"
+                              onClick={() => setSelectedProduct(product)}
+                              className="group flex h-full w-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] text-left transition-all duration-200 hover:border-white/[0.14] hover:bg-white/[0.05]"
                             >
-                              <button
-                                type="button"
-                                onClick={() => setSelectedProduct(product)}
-                                className="group flex h-full w-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] text-left transition-all duration-200 hover:border-white/[0.14] hover:bg-white/[0.05]"
-                              >
                                 <span className="relative block aspect-square w-full overflow-hidden bg-[#0d0d0d]">
                                   <img
                                     src={cardImage}
@@ -1062,7 +1225,6 @@ export default function Menu() {
                                   </span>
                                 </span>
                               </button>
-                            </Reveal>
                           );
                         })}
                       </div>
@@ -1070,7 +1232,7 @@ export default function Menu() {
                   );
                 })}
 
-              <Reveal className="mt-16">
+              <div className="mt-16">
                 <section className="space-y-5 border-t border-[#141414] py-10 text-center">
                   <p className="text-[10px] uppercase tracking-[0.35em] text-[#8a8a8a]">
                     {s.shareNight}
@@ -1089,7 +1251,7 @@ export default function Menu() {
                     {s.tagUs}
                   </p>
                 </section>
-              </Reveal>
+              </div>
 
               <footer className="border-t border-[#141414] pb-2 pt-6 text-center">
                 <img
@@ -1580,34 +1742,148 @@ export default function Menu() {
         </div>
       )}
 
-      {!dataLoading && !dataError && categoryOrder.length > 0 && (
-        <nav
-          aria-label={s.categories}
-          className="fixed inset-x-0 bottom-0 z-40 bg-gradient-to-t from-black via-black/95 to-transparent pb-[max(1rem,env(safe-area-inset-bottom))] pt-10 lg:hidden"
+      {showCategories && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={s.allCategories}
+          className="fixed inset-0 z-[70]"
         >
-          <div className="scrollbar-hide flex gap-2 overflow-x-auto px-4 pb-1">
-            {categoryOrder.map(category => {
-              const names = splitCatName(category.name);
-              const Icon = categoryIcon[names.en] || UtensilsCrossed;
-              const isActive = activeCategory === category.id;
-              return (
+          <button
+            type="button"
+            aria-label={s.close}
+            className="animate-fade-in absolute inset-0 h-full w-full cursor-default bg-black/75 backdrop-blur-sm"
+            onClick={() => setShowCategories(false)}
+          />
+          <div className="animate-sheet-up absolute bottom-0 left-0 right-0 mx-auto flex max-h-[85svh] max-w-xl flex-col rounded-t-[2rem] border-t border-[#262626] bg-[#0b0b0b] shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[#161616] px-6 pb-3 pt-4">
+              <h2 className="font-display text-2xl">{s.allCategories}</h2>
+              <button
+                type="button"
+                onClick={() => setShowCategories(false)}
+                aria-label={s.close}
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.07] transition-colors hover:bg-white/[0.14]"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="overflow-y-auto px-4 py-4">
+              <div className="grid grid-cols-2 gap-2">
+                {categoryOrder.map(category => {
+                  const names = splitCatName(category.name);
+                  const Icon = categoryIcon[names.en] || UtensilsCrossed;
+                  const count = productsByCategory[category.id]?.length ?? 0;
+                  return (
+                    <button
+                      type="button"
+                      key={category.id}
+                      onClick={() => {
+                        setShowCategories(false);
+                        scrollToCategory(category.id);
+                      }}
+                      className="flex items-center gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.02] px-3 py-3 text-left transition-colors hover:bg-white/[0.06]"
+                    >
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#E30614]/30 bg-[#E30614]/[0.08]">
+                        <Icon className="h-4 w-4 text-[#FF4D5E]" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm">
+                          {categoryName(category.name)}
+                        </span>
+                        <span className="text-[11px] tabular-nums text-[#8a8a8a]">
+                          {count} {s.items}
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showFilters && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={s.filters}
+          className="fixed inset-0 z-[70]"
+        >
+          <button
+            type="button"
+            aria-label={s.close}
+            className="animate-fade-in absolute inset-0 h-full w-full cursor-default bg-black/75 backdrop-blur-sm"
+            onClick={() => setShowFilters(false)}
+          />
+          <div className="animate-sheet-up absolute bottom-0 left-0 right-0 mx-auto max-w-xl rounded-t-[2rem] border-t border-[#262626] bg-[#0b0b0b] pb-[max(1.5rem,env(safe-area-inset-bottom))] shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[#161616] px-6 pb-3 pt-4">
+              <h2 className="font-display text-2xl">{s.filters}</h2>
+              <button
+                type="button"
+                onClick={() => setShowFilters(false)}
+                aria-label={s.close}
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.07] transition-colors hover:bg-white/[0.14]"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="px-6 py-5">
+              <div className="flex flex-wrap gap-2">
+                {availableBadges.map(key => {
+                  const active = activeFilters.includes(key);
+                  return (
+                    <button
+                      type="button"
+                      key={key}
+                      onClick={() => toggleFilter(key)}
+                      className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                        active
+                          ? BADGE_META[key].className
+                          : "border border-white/10 bg-white/[0.03] text-neutral-300 hover:bg-white/[0.08]"
+                      }`}
+                    >
+                      {badgeLabel(key, lang)}
+                    </button>
+                  );
+                })}
+              </div>
+              {activeFilters.length > 0 && (
                 <button
                   type="button"
-                  key={category.id}
-                  onClick={() => scrollToCategory(category.id)}
-                  className={`flex h-11 shrink-0 items-center gap-2 rounded-2xl border px-4 text-xs transition-colors ${
-                    isActive
-                      ? "border-[#E30614] bg-[#E30614] font-medium text-white"
-                      : "border-white/10 bg-[#111] text-neutral-400 hover:bg-[#1a1a1a] hover:text-white"
-                  }`}
+                  onClick={() => setActiveFilters([])}
+                  className="mt-5 flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl border border-white/10 text-sm text-neutral-300 transition-colors hover:bg-white/[0.05]"
                 >
-                  <Icon className="h-4 w-4" />
-                  <span>{categoryName(category.name)}</span>
+                  <X className="h-4 w-4" />
+                  {{ bg: "Изчисти", en: "Clear", tr: "Temizle", ru: "Сбросить" }[lang]}
                 </button>
-              );
-            })}
+              )}
+            </div>
           </div>
-        </nav>
+        </div>
+      )}
+
+      {canOrder && (
+        <div className="fixed bottom-5 right-4 z-[55] flex flex-col items-end gap-2">
+          <button
+            type="button"
+            onClick={() => callService("waiter")}
+            disabled={serviceRequest.isPending}
+            className="flex h-12 items-center gap-2 rounded-full border border-white/10 bg-[#141414]/95 px-4 text-sm font-medium text-white shadow-2xl shadow-black/40 backdrop-blur transition-colors hover:bg-[#1e1e1e] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <Bell className="h-4 w-4 text-[#FF4D5E]" />
+            {s.callWaiter}
+          </button>
+          <button
+            type="button"
+            onClick={() => callService("bill")}
+            disabled={serviceRequest.isPending}
+            className="flex h-11 items-center gap-2 rounded-full border border-white/10 bg-[#141414]/95 px-4 text-sm font-medium text-white shadow-2xl shadow-black/40 backdrop-blur transition-colors hover:bg-[#1e1e1e] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <Receipt className="h-4 w-4 text-[#FF4D5E]" />
+            {s.requestBill}
+          </button>
+        </div>
       )}
     </div>
   );

@@ -13,7 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Eye, CheckCircle, Clock, ChefHat } from "lucide-react";
+import { Trash2, Eye, CheckCircle, Clock, ChefHat, Bell, Receipt } from "lucide-react";
 
 const statusColors: Record<string, string> = {
   pending: "bg-yellow-900/30 text-yellow-400 border-yellow-700",
@@ -55,6 +55,15 @@ export default function OrdersManager() {
     onError: (e) => toast.error(e.message),
   });
 
+  const { data: requests } = trpc.service.pending.useQuery(undefined, {
+    refetchInterval: 15000,
+  });
+
+  const resolveReq = trpc.service.resolve.useMutation({
+    onSuccess: () => utils.service.pending.invalidate(),
+    onError: (e) => toast.error(e.message),
+  });
+
   const selectedOrderData = orders?.find((o) => o.id === selectedOrder);
 
   return (
@@ -62,6 +71,55 @@ export default function OrdersManager() {
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-semibold text-white">Поръчки</h2>
       </div>
+
+      {requests && requests.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="text-sm font-semibold text-yellow-400 flex items-center gap-2">
+            <Bell className="w-4 h-4" />
+            Заявки за обслужване
+          </h3>
+          <div className="space-y-2">
+            {requests.map((req) => (
+              <div
+                key={req.id}
+                className={`flex items-center justify-between gap-3 rounded-lg border p-3 bg-[#111] ${
+                  req.type === "bill"
+                    ? "border-yellow-700/70"
+                    : "border-red-700/70"
+                }`}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  {req.type === "bill" ? (
+                    <Receipt className="w-4 h-4 text-yellow-400 shrink-0" />
+                  ) : (
+                    <Bell className="w-4 h-4 text-red-400 shrink-0" />
+                  )}
+                  <div className="min-w-0">
+                    <p className="font-semibold text-white truncate">
+                      {req.type === "bill"
+                        ? "🧾 Сметка"
+                        : "🔔 Извикване на сервитьор"}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate">
+                      Маса: {req.table?.name || "?"} |{" "}
+                      {new Date(req.createdAt).toLocaleTimeString("bg-BG")}
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  disabled={resolveReq.isPending}
+                  onClick={() => resolveReq.mutate({ id: req.id })}
+                  className="bg-green-600 hover:bg-green-700 text-white shrink-0"
+                >
+                  <CheckCircle className="w-4 h-4 mr-1" />
+                  Готово
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {isLoading && (
         <div className="text-center py-8 text-gray-500">Зареждане...</div>

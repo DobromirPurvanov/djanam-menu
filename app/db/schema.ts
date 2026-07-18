@@ -113,3 +113,22 @@ export const orderItems = mysqlTable(
 
 export type OrderItem = typeof orderItems.$inferSelect;
 export type InsertOrderItem = typeof orderItems.$inferInsert;
+
+// Service Requests (Заявки за обслужване — извикай сервитьор / сметка)
+export const serviceRequests = mysqlTable(
+  "service_requests",
+  {
+    id: serial("id").primaryKey(),
+    tableId: bigint("table_id", { mode: "number", unsigned: true }).notNull(),
+    type: varchar("type", { length: 20 }).notNull(), // "waiter" | "bill"
+    status: varchar("status", { length: 20 }).notNull().default("pending"), // "pending" | "done"
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    serviceTableIdx: index("service_table_idx").on(table.tableId),
+    serviceStatusIdx: index("service_status_idx").on(table.status),
+  })
+);
+
+export type ServiceRequest = typeof serviceRequests.$inferSelect;
+export type InsertServiceRequest = typeof serviceRequests.$inferInsert;

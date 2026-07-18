@@ -48,6 +48,7 @@ const procedures = {
   "table.byQrToken": (input) =>
     tables.find((t) => t.qrToken === input?.qrToken) ?? null,
   "table.visit": () => ({ success: true }),
+  "service.create": () => ({ ok: true }),
   "order.create": (input) => ({
     id: Math.floor(Math.random() * 10000),
     status: "pending",
