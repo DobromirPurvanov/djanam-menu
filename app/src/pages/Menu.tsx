@@ -1,35 +1,30 @@
-import { useState, useEffect, useMemo, useRef, useCallback } from "react";
-import { useParams } from "react-router";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { trpc } from "@/providers/trpc";
-import { trNames, trDescriptions } from "@/i18n/tr";
 import { bgNames } from "@/i18n/bg";
+import { trDescriptions, trNames } from "@/i18n/tr";
 import {
-  Search,
-  X,
-  Bell,
-  Instagram,
-  Globe,
-  Salad,
-  Sandwich,
-  Croissant,
-  UtensilsCrossed,
   Beef,
-  Drumstick,
   Bird,
-  Fish,
   CakeSlice,
-  Wine,
-  Martini,
-  GlassWater,
-  CupSoda,
-  Citrus,
-  Coffee,
   Check,
   ChevronLeft,
   ChevronRight,
-  Plus,
-  Minus,
-  ShoppingBag,
+  Citrus,
+  Coffee,
+  Croissant,
+  CupSoda,
+  Fish,
+  GlassWater,
+  Globe,
+  Instagram,
+  Martini,
+  RefreshCw,
+  Salad,
+  Sandwich,
+  Search,
+  UtensilsCrossed,
+  Wine,
+  X,
   type LucideIcon,
 } from "lucide-react";
 
@@ -51,16 +46,15 @@ type ProductItem = {
 
 type Lang = "bg" | "en" | "tr";
 
-/* ─── Category presentation ─── */
 const categoryIcon: Record<string, LucideIcon> = {
   Salads: Salad,
   Appetizer: Sandwich,
   Bread: Croissant,
   Starters: UtensilsCrossed,
-  Beef: Beef,
-  Lamb: Drumstick,
+  Beef,
+  Lamb: Beef,
   Poultry: Bird,
-  Fish: Fish,
+  Fish,
   Desserts: CakeSlice,
   Whiskey: Wine,
   "Gin & Rum": Martini,
@@ -75,73 +69,73 @@ const categoryIcon: Record<string, LucideIcon> = {
   "Hot Drinks": Coffee,
 };
 
-const categorySubtitleBg: Record<string, string> = {
-  Salads: "Свежи комбинации",
-  Appetizer: "Перфектно начало",
-  Bread: "Пресен и топъл",
-  Starters: "Започнете със стил",
-  Beef: "Black Angus селекция",
-  Lamb: "Нежно и ароматно",
-  Poultry: "Внимателно подбрано",
-  Fish: "Прясно уловена",
-  Desserts: "Сладък финал",
-  Whiskey: "Отлежала селекция",
-  "Gin & Rum": "Класика и новост",
-  Vodka: "Премиум марки",
-  "Anise Drinks": "Медитерански класики",
-  Rakia: "Българска традиция",
-  Liquors: "Сладки и ароматни",
-  Tequila: "100% агаве",
-  Beer: "Точно охладена",
-  "Soft Drinks": "Освежаващи",
-  "Fresh Juices": "Прясно изцедени",
-  "Hot Drinks": "Кафе и чай",
-};
-
-const categorySubtitleEn: Record<string, string> = {
-  Salads: "Fresh combinations",
-  Appetizer: "The perfect start",
-  Bread: "Fresh & warm",
-  Starters: "Begin in style",
-  Beef: "Black Angus selection",
-  Lamb: "Tender & aromatic",
-  Poultry: "Carefully sourced",
-  Fish: "Freshly caught",
-  Desserts: "A sweet finale",
-  Whiskey: "Aged selection",
-  "Gin & Rum": "Classics & new",
-  Vodka: "Premium labels",
-  "Anise Drinks": "Mediterranean classics",
-  Rakia: "Bulgarian tradition",
-  Liquors: "Sweet & aromatic",
-  Tequila: "100% agave",
-  Beer: "Perfectly chilled",
-  "Soft Drinks": "Refreshing",
-  "Fresh Juices": "Freshly squeezed",
-  "Hot Drinks": "Coffee & tea",
-};
-
-const categorySubtitleTr: Record<string, string> = {
-  Salads: "Taze kombinasyonlar",
-  Appetizer: "Mükemmel bir başlangıç",
-  Bread: "Taze ve sıcak",
-  Starters: "Tarz bir başlangıç",
-  Beef: "Black Angus seçkisi",
-  Lamb: "Yumuşak ve aromatik",
-  Poultry: "Özenle seçilmiş",
-  Fish: "Taze tutulmuş",
-  Desserts: "Tatlı bir final",
-  Whiskey: "Yıllanmış seçki",
-  "Gin & Rum": "Klasikler ve yeniler",
-  Vodka: "Premium markalar",
-  "Anise Drinks": "Akdeniz klasikleri",
-  Rakia: "Balkan geleneği",
-  Liquors: "Tatlı ve aromatik",
-  Tequila: "%100 agave",
-  Beer: "Buz gibi",
-  "Soft Drinks": "Serinletici",
-  "Fresh Juices": "Taze sıkılmış",
-  "Hot Drinks": "Kahve ve çay",
+const categorySubtitle: Record<Lang, Record<string, string>> = {
+  bg: {
+    Salads: "Свежи комбинации",
+    Appetizer: "Перфектно начало",
+    Bread: "Пресен и топъл",
+    Starters: "Започнете със стил",
+    Beef: "Black Angus селекция",
+    Lamb: "Нежно и ароматно",
+    Poultry: "Внимателно подбрано",
+    Fish: "Прясно уловена",
+    Desserts: "Сладък финал",
+    Whiskey: "Отлежала селекция",
+    "Gin & Rum": "Класика и новост",
+    Vodka: "Премиум марки",
+    "Anise Drinks": "Медитерански класики",
+    Rakia: "Българска традиция",
+    Liquors: "Сладки и ароматни",
+    Tequila: "100% агаве",
+    Beer: "Точно охладена",
+    "Soft Drinks": "Освежаващи",
+    "Fresh Juices": "Прясно изцедени",
+    "Hot Drinks": "Кафе и чай",
+  },
+  en: {
+    Salads: "Fresh combinations",
+    Appetizer: "The perfect start",
+    Bread: "Fresh & warm",
+    Starters: "Begin in style",
+    Beef: "Black Angus selection",
+    Lamb: "Tender & aromatic",
+    Poultry: "Carefully sourced",
+    Fish: "Freshly caught",
+    Desserts: "A sweet finale",
+    Whiskey: "Aged selection",
+    "Gin & Rum": "Classics & new",
+    Vodka: "Premium labels",
+    "Anise Drinks": "Mediterranean classics",
+    Rakia: "Bulgarian tradition",
+    Liquors: "Sweet & aromatic",
+    Tequila: "100% agave",
+    Beer: "Perfectly chilled",
+    "Soft Drinks": "Refreshing",
+    "Fresh Juices": "Freshly squeezed",
+    "Hot Drinks": "Coffee & tea",
+  },
+  tr: {
+    Salads: "Taze kombinasyonlar",
+    Appetizer: "Mükemmel bir başlangıç",
+    Bread: "Taze ve sıcak",
+    Starters: "Tarz bir başlangıç",
+    Beef: "Black Angus seçkisi",
+    Lamb: "Yumuşak ve aromatik",
+    Poultry: "Özenle seçilmiş",
+    Fish: "Taze tutulmuş",
+    Desserts: "Tatlı bir final",
+    Whiskey: "Yıllanmış seçki",
+    "Gin & Rum": "Klasikler ve yeniler",
+    Vodka: "Premium markalar",
+    "Anise Drinks": "Akdeniz klasikleri",
+    Rakia: "Balkan geleneği",
+    Liquors: "Tatlı ve aromatik",
+    Tequila: "%100 agave",
+    Beer: "Buz gibi",
+    "Soft Drinks": "Serinletici",
+    "Fresh Juices": "Taze sıkılmış",
+    "Hot Drinks": "Kahve ve çay",
+  },
 };
 
 const categoryNameTr: Record<string, string> = {
@@ -167,148 +161,109 @@ const categoryNameTr: Record<string, string> = {
   "Hot Drinks": "Sıcak İçecekler",
 };
 
-const categorySubtitle: Record<Lang, Record<string, string>> = {
-  bg: categorySubtitleBg,
-  en: categorySubtitleEn,
-  tr: categorySubtitleTr,
-};
-
-/* ─── UI strings ─── */
 const t = {
   bg: {
     tagline: "Стейк & риба · Варна",
     heroSub: "Всеки детайл за Вашето удоволствие",
     scroll: "Разгледайте менюто",
-    explore: "Меню",
+    menu: "Меню",
+    categories: "Категории",
     search: "Търсене в менюто…",
-    searchResults: "резултата",
-    noResults: "Нищо не е намерено. Опитайте с друга дума.",
-    items: "артикула",
-    all: "Всички",
-    callWaiter: "Извикай сервитьор",
-    waiterCalled: "Сервитьорът беше извикан! Моля, изчакайте.",
-    table: "Маса",
-    scanPrompt: "Моля, сканирайте QR кода на Вашата маса, за да разгледате менюто.",
-    invalidQr: "Невалиден QR код",
-    invalidQrSub: "Тази маса не съществува в системата. Моля, сканирайте валиден QR код.",
+    noResults: "Няма намерени предложения. Опитайте с друга дума.",
+    items: "предложения",
     shareNight: "Споделете вечерта",
     stayLoop: "Последвайте ни",
     tagUs: "Отбележете ни в сторито си — може да получите изненада",
     weight: "Грамаж",
-    menu: "Меню",
-    addToOrder: "Добави",
-    order: "Поръчка",
-    total: "Общо",
-    sendOrder: "Изпрати поръчката",
-    sending: "Изпращане…",
-    orderSent: "Поръчката е изпратена!",
-    orderSentSub: "Сервитьорът я получи и идва при Вас.",
-    emptyOrder: "Все още няма артикули",
-    notesLabel: "Бележка (незадължително)",
-    notesPlaceholder: "Напр. без лук…",
+    close: "Затвори",
+    language: "Избор на език",
+    loadError: "Менюто не можа да се зареди.",
+    retry: "Опитайте отново",
   },
   en: {
     tagline: "Steak & Fish · Varna",
     heroSub: "Every detail for your pleasure",
     scroll: "Explore the menu",
-    explore: "Menu",
+    menu: "Menu",
+    categories: "Categories",
     search: "Search the menu…",
-    searchResults: "results",
-    noResults: "Nothing found. Try another word.",
+    noResults: "No dishes found. Try another search.",
     items: "items",
-    all: "All",
-    callWaiter: "Call the waiter",
-    waiterCalled: "The waiter has been called! Please wait.",
-    table: "Table",
-    scanPrompt: "Please scan the QR code on your table to view the menu.",
-    invalidQr: "Invalid QR code",
-    invalidQrSub: "This table does not exist. Please scan a valid QR code.",
     shareNight: "Share the night",
     stayLoop: "Stay in the loop",
     tagUs: "Tag us in your story — you might get a surprise",
     weight: "Weight",
-    menu: "Menu",
-    addToOrder: "Add",
-    order: "Order",
-    total: "Total",
-    sendOrder: "Send the order",
-    sending: "Sending…",
-    orderSent: "Order sent!",
-    orderSentSub: "The waiter received it and is on the way.",
-    emptyOrder: "No items yet",
-    notesLabel: "Note (optional)",
-    notesPlaceholder: "E.g. no onion…",
+    close: "Close",
+    language: "Choose language",
+    loadError: "The menu could not be loaded.",
+    retry: "Try again",
   },
   tr: {
     tagline: "Biftek & Balık · Varna",
     heroSub: "Keyfiniz için her detay",
     scroll: "Menüyü keşfedin",
-    explore: "Menü",
+    menu: "Menü",
+    categories: "Kategoriler",
     search: "Menüde ara…",
-    searchResults: "sonuç",
     noResults: "Sonuç bulunamadı. Başka bir kelime deneyin.",
     items: "ürün",
-    all: "Tümü",
-    callWaiter: "Garsonu çağır",
-    waiterCalled: "Garson çağrıldı! Lütfen bekleyin.",
-    table: "Masa",
-    scanPrompt: "Menüyü görüntülemek için lütfen masanızdaki QR kodu okutun.",
-    invalidQr: "Geçersiz QR kod",
-    invalidQrSub: "Bu masa sistemde mevcut değil. Lütfen geçerli bir QR kod okutun.",
     shareNight: "Geceyi paylaşın",
     stayLoop: "Bizi takip edin",
     tagUs: "Hikayenizde bizi etiketleyin — sürpriz kazanabilirsiniz",
     weight: "Gramaj",
-    menu: "Menü",
-    addToOrder: "Ekle",
-    order: "Sipariş",
-    total: "Toplam",
-    sendOrder: "Siparişi gönder",
-    sending: "Gönderiliyor…",
-    orderSent: "Sipariş gönderildi!",
-    orderSentSub: "Garson siparişi aldı, geliyor.",
-    emptyOrder: "Henüz ürün yok",
-    notesLabel: "Not (isteğe bağlı)",
-    notesPlaceholder: "Örn. soğansız…",
+    close: "Kapat",
+    language: "Dil seçin",
+    loadError: "Menü yüklenemedi.",
+    retry: "Tekrar deneyin",
   },
 } as const;
 
 const ACCENT = "#E30614";
-const ACCENT_LIGHT = "#FF4D5E";
 
-/* ─── Helpers ─── */
 function splitCatName(full: string): { bg: string; en: string } {
   const parts = full.split(" / ");
   return { bg: parts[0], en: parts[1] || parts[0] };
 }
 
-/* ─── Scroll reveal wrapper ─── */
-function Reveal({ children, className = "", delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
+function Reveal({
+  children,
+  className = "",
+  delay = 0,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  delay?: number;
+}) {
   const ref = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
+    const element = ref.current;
+    if (!element) return;
+    const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          el.classList.add("is-visible");
-          obs.disconnect();
+          element.classList.add("is-visible");
+          observer.disconnect();
         }
       },
       { threshold: 0.08 }
     );
-    obs.observe(el);
-    return () => obs.disconnect();
+    observer.observe(element);
+    return () => observer.disconnect();
   }, []);
+
   return (
-    <div ref={ref} className={`reveal ${className}`} style={delay ? { transitionDelay: `${delay}ms` } : undefined}>
+    <div
+      ref={ref}
+      className={`reveal ${className}`}
+      style={delay ? { transitionDelay: `${delay}ms` } : undefined}
+    >
       {children}
     </div>
   );
 }
 
 export default function Menu() {
-  const { qrToken } = useParams<{ qrToken: string }>();
   const [lang, setLang] = useState<Lang>(() => {
     try {
       const saved = localStorage.getItem("djanam-lang");
@@ -319,393 +274,606 @@ export default function Menu() {
   });
   const [activeCategory, setActiveCategory] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedProduct, setSelectedProduct] = useState<ProductItem | null>(null);
-  const [imgIdx, setImgIdx] = useState(0);
-  const [waiterCalled, setWaiterCalled] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<ProductItem | null>(
+    null
+  );
+  const [imageIndex, setImageIndex] = useState(0);
   const [showSearch, setShowSearch] = useState(false);
   const [showLangMenu, setShowLangMenu] = useState(false);
-  const [cart, setCart] = useState<Record<number, { p: ProductItem; qty: number; notes?: string }>>({});
-  const [cartOpen, setCartOpen] = useState(false);
-  const [orderSent, setOrderSent] = useState(false);
-  const [sheetQty, setSheetQty] = useState(1);
-  const [sheetNotes, setSheetNotes] = useState("");
-
+  const [headerSolid, setHeaderSolid] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const s = t[lang];
 
-  /* Browse mode: /menu/browse — public menu view from the website (no table, no waiter) */
-  const isBrowse = qrToken === "browse";
+  const {
+    data: categories,
+    isLoading: categoriesLoading,
+    isError: categoriesError,
+    refetch: refetchCategories,
+  } = trpc.category.active.useQuery();
+  const {
+    data: products,
+    isLoading: productsLoading,
+    isError: productsError,
+    refetch: refetchProducts,
+  } = trpc.product.active.useQuery();
 
   const changeLang = useCallback((next: Lang) => {
     setLang(next);
     setShowLangMenu(false);
     try {
       localStorage.setItem("djanam-lang", next);
-    } catch {}
-  }, []);
-
-  const { data: table, isLoading: tableLoading } = trpc.table.byQrToken.useQuery(
-    { qrToken: qrToken || "" },
-    { enabled: !!qrToken && !isBrowse }
-  );
-
-  const visitMutation = trpc.table.visit.useMutation();
-
-  useEffect(() => {
-    if (qrToken && table && !isBrowse) {
-      visitMutation.mutate({ qrToken });
+    } catch {
+      // The menu still works when storage is disabled.
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [qrToken, table]);
-
-  const { data: categories, isLoading: catsLoading } = trpc.category.active.useQuery();
-  const { data: products, isLoading: prodsLoading } = trpc.product.active.useQuery();
-
-  const handleCallWaiter = useCallback(() => {
-    setWaiterCalled(true);
-    setTimeout(() => setWaiterCalled(false), 4000);
   }, []);
 
-  /* ─── Cart ─── */
-  const createOrder = trpc.order.create.useMutation();
-
-  const addToCart = useCallback((p: ProductItem, qty = 1, notes?: string) => {
-    setCart((prev) => ({
-      ...prev,
-      [p.id]: {
-        p,
-        qty: (prev[p.id]?.qty ?? 0) + qty,
-        notes: notes ?? prev[p.id]?.notes,
-      },
-    }));
-  }, []);
-
-  const setCartQty = useCallback((id: number, qty: number) => {
-    setCart((prev) => {
-      if (qty <= 0) {
-        const { [id]: _removed, ...rest } = prev;
-        return rest;
-      }
-      return { ...prev, [id]: { ...prev[id], qty } };
-    });
-  }, []);
-
-  const cartItems = useMemo(() => Object.values(cart), [cart]);
-  const cartCount = useMemo(() => cartItems.reduce((n, i) => n + i.qty, 0), [cartItems]);
-  const cartTotalEur = useMemo(
-    () => cartItems.reduce((sum, i) => sum + Number(i.p.priceEur) * i.qty, 0),
-    [cartItems]
-  );
-  const cartTotalBgn = useMemo(
-    () => cartItems.reduce((sum, i) => sum + Number(i.p.priceBgn) * i.qty, 0),
-    [cartItems]
+  const productName = useCallback(
+    (product: ProductItem) =>
+      lang === "tr"
+        ? trNames[product.name] || product.nameEn || product.name
+        : lang === "en"
+          ? product.nameEn || product.name
+          : bgNames[product.name] || product.name,
+    [lang]
   );
 
-  const submitOrder = useCallback(() => {
-    if (!table || cartItems.length === 0) return;
-    createOrder.mutate(
-      {
-        tableId: table.id,
-        items: cartItems.map((i) => ({
-          productId: i.p.id,
-          productName: i.p.nameEn || i.p.name,
-          quantity: i.qty,
-          unitPrice: i.p.priceEur,
-          notes: i.notes,
-        })),
-      },
-      {
-        onSuccess: () => {
-          setCart({});
-          setCartOpen(false);
-          setOrderSent(true);
-          setTimeout(() => setOrderSent(false), 5000);
-        },
-      }
-    );
-  }, [table, cartItems, createOrder]);
+  const productDescription = useCallback(
+    (product: ProductItem): string | null => {
+      if (!product.description) return null;
+      const parts = product.description.split(" / ");
+      const bg = parts[0];
+      const en = parts.length > 1 ? parts.slice(1).join(" / ") : null;
+      if (lang === "bg") return bg;
+      if (lang === "en") return en ?? bg;
+      return trDescriptions[product.name] ?? en ?? bg;
+    },
+    [lang]
+  );
+
+  const categoryName = useCallback(
+    (full: string) => {
+      const names = splitCatName(full);
+      if (lang === "tr") return categoryNameTr[names.en] || names.en;
+      return lang === "en" ? names.en : names.bg;
+    },
+    [lang]
+  );
 
   const filteredProducts = useMemo(() => {
-    let list = (products as ProductItem[]) || [];
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      list = list.filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) ||
-          (p.nameEn && p.nameEn.toLowerCase().includes(q)) ||
-          (p.description && p.description.toLowerCase().includes(q))
-      );
-    }
-    return list;
-  }, [products, searchQuery]);
+    const list = (products as ProductItem[] | undefined) ?? [];
+    const query = searchQuery
+      .trim()
+      .toLocaleLowerCase(lang === "tr" ? "tr" : "bg");
+    if (!query) return list;
+
+    return list.filter(product => {
+      const searchable = [
+        product.name,
+        product.nameEn,
+        bgNames[product.name],
+        trNames[product.name],
+        productDescription(product),
+        product.category?.name,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLocaleLowerCase(lang === "tr" ? "tr" : "bg");
+      return searchable.includes(query);
+    });
+  }, [lang, productDescription, products, searchQuery]);
 
   const productsByCategory = useMemo(() => {
     const grouped: Record<number, ProductItem[]> = {};
-    for (const p of filteredProducts) {
-      if (!grouped[p.categoryId]) grouped[p.categoryId] = [];
-      grouped[p.categoryId].push(p);
+    for (const product of filteredProducts) {
+      (grouped[product.categoryId] ??= []).push(product);
     }
     return grouped;
   }, [filteredProducts]);
 
   const categoryOrder = useMemo(
     () =>
-      categories
-        ?.filter((c) => productsByCategory[c.id]?.length > 0)
+      [...(categories ?? [])]
+        .filter(category => productsByCategory[category.id]?.length > 0)
         .sort((a, b) => a.sortOrder - b.sortOrder),
     [categories, productsByCategory]
   );
 
-  /* Scrollspy — highlight the category currently in view */
-  useEffect(() => {
-    if (!categoryOrder?.length) return;
-    const sections = categoryOrder
-      .map((c) => document.getElementById(`cat-section-${c.id}`))
-      .filter(Boolean) as HTMLElement[];
-    const obs = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          if (e.isIntersecting) {
-            const id = Number(e.target.id.replace("cat-section-", ""));
-            setActiveCategory(id);
-          }
-        }
-      },
-      { rootMargin: "-20% 0px -65% 0px" }
-    );
-    sections.forEach((el) => obs.observe(el));
-    return () => obs.disconnect();
-  }, [categoryOrder]);
-
-  const scrollToCategory = (catId: number) => {
-    const el = document.getElementById(`cat-section-${catId}`);
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
-
-  const productName = (p: ProductItem) =>
-    lang === "tr"
-      ? trNames[p.name] || p.nameEn || p.name
-      : lang === "en"
-        ? p.nameEn || p.name
-        : bgNames[p.name] || p.name;
-
-  const productDesc = (p: ProductItem): string | null => {
-    if (!p.description) return null;
-    const parts = p.description.split(" / ");
-    const bg = parts[0];
-    const en = parts.length > 1 ? parts.slice(1).join(" / ") : null;
-    if (lang === "bg") return bg;
-    if (lang === "en") return en ?? bg;
-    return trDescriptions[p.name] ?? en ?? bg;
-  };
-
-  const catName = (full: string) => {
-    const names = splitCatName(full);
-    return lang === "tr" ? categoryNameTr[names.en] || names.en : lang === "en" ? names.en : names.bg;
-  };
-
-  const searchResults = searchQuery.trim() ? filteredProducts : [];
-
-  /* Gallery images for the open product sheet */
   const sheetImages = useMemo(() => {
     if (!selectedProduct) return [];
-    if (selectedProduct.images && selectedProduct.images.length > 0) return selectedProduct.images;
+    if (selectedProduct.images?.length) return selectedProduct.images;
     return selectedProduct.image ? [selectedProduct.image] : [];
   }, [selectedProduct]);
 
+  const dataLoading = categoriesLoading || productsLoading;
+  const dataError = categoriesError || productsError;
+
+  const retryLoading = () => {
+    void Promise.all([refetchCategories(), refetchProducts()]);
+  };
+
+  const scrollToCategory = (categoryId: number) => {
+    document
+      .getElementById(`cat-section-${categoryId}`)
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   useEffect(() => {
-    setImgIdx(0);
-    setSheetQty(1);
-    setSheetNotes("");
+    const handleScroll = () => setHeaderSolid(window.scrollY > 40);
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    if (!categoryOrder.length) return;
+    const sections = categoryOrder
+      .map(category => document.getElementById(`cat-section-${category.id}`))
+      .filter(Boolean) as HTMLElement[];
+    const observer = new IntersectionObserver(
+      entries => {
+        const visible = entries.find(entry => entry.isIntersecting);
+        if (visible) {
+          setActiveCategory(
+            Number(visible.target.id.replace("cat-section-", ""))
+          );
+        }
+      },
+      { rootMargin: "-18% 0px -68% 0px" }
+    );
+    sections.forEach(section => observer.observe(section));
+    return () => observer.disconnect();
+  }, [categoryOrder]);
+
+  useEffect(() => {
+    if (showSearch) {
+      window.setTimeout(() => searchInputRef.current?.focus(), 50);
+    }
+  }, [showSearch]);
+
+  useEffect(() => {
+    setImageIndex(0);
   }, [selectedProduct]);
 
-  /* ─── Landing (no QR) ─── */
-  if (!qrToken) {
-    return (
-      <div className="min-h-screen bg-[#050505] text-white flex items-center justify-center p-6">
-        <div className="max-w-md w-full text-center space-y-8">
-          <div className="w-20 h-20 mx-auto">
-            <img src="./bull-icon.png" alt="Djanam" className="w-full h-full object-contain" />
-          </div>
-          <div>
-            <h1 className="font-display text-5xl tracking-wide">Djanam</h1>
-            <p className="mt-2 text-[11px] tracking-[0.35em] uppercase text-neutral-500">Steak & Fish</p>
-          </div>
-          <div className="h-px w-16 mx-auto" style={{ backgroundColor: `${ACCENT}60` }} />
-          <p className="text-neutral-400 leading-relaxed">{s.scanPrompt}</p>
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    const modalOpen = showSearch || Boolean(selectedProduct);
+    if (!modalOpen) return;
 
-  /* ─── Loading ─── */
-  if (tableLoading) {
-    return (
-      <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center gap-6 p-6">
-        <div className="skeleton w-20 h-20 rounded-full" />
-        <div className="skeleton h-8 w-48 rounded-lg" />
-        <div className="skeleton h-4 w-32 rounded" />
-      </div>
-    );
-  }
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setShowSearch(false);
+        setSelectedProduct(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [selectedProduct, showSearch]);
 
-  if (!isBrowse && !table) {
-    return (
-      <div className="min-h-screen bg-[#050505] text-white flex items-center justify-center p-6">
-        <div className="max-w-md w-full text-center space-y-4">
-          <h1 className="font-display text-2xl" style={{ color: ACCENT_LIGHT }}>{s.invalidQr}</h1>
-          <p className="text-neutral-500">{s.invalidQrSub}</p>
-        </div>
-      </div>
-    );
-  }
-
-  const dataLoading = catsLoading || prodsLoading;
+  useEffect(() => {
+    document.documentElement.lang = lang;
+    document.title = `${s.menu} | Djanam Steak & Fish`;
+  }, [lang, s.menu]);
 
   return (
-    <div className="min-h-screen bg-[#050505] text-[#f5f2ec] overflow-x-hidden">
-      {/* ─── Header ─── */}
-      <header className="fixed top-0 left-0 right-0 z-50 px-5 py-4 flex items-center justify-between bg-gradient-to-b from-black/80 to-transparent">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9">
-            <img src="./bull-icon.png" alt="Djanam" className="w-full h-full object-contain" />
-          </div>
-          <span className="font-display text-base tracking-wide">Djanam</span>
-        </div>
-        <div className="flex items-center gap-2.5">
-          <div className="relative">
-            <button
-              onClick={() => setShowLangMenu(!showLangMenu)}
-              aria-label="Switch language"
-              aria-expanded={showLangMenu}
-              className="h-9 px-3 rounded-full bg-white/[0.07] backdrop-blur flex items-center gap-1.5 hover:bg-white/[0.14] transition-colors cursor-pointer"
-            >
-              <Globe className="w-3.5 h-3.5 text-neutral-400" />
-              <span className="text-[11px] font-medium tracking-wider uppercase">{lang}</span>
-            </button>
-            {showLangMenu && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setShowLangMenu(false)} />
-                <div className="animate-fade-in absolute right-0 top-11 z-50 w-40 rounded-2xl border border-[#262626] bg-[#0e0e0e] shadow-2xl overflow-hidden">
-                  {([
-                    ["bg", "Български"],
-                    ["en", "English"],
-                    ["tr", "Türkçe"],
-                  ] as [Lang, string][]).map(([code, label]) => (
-                    <button
-                      key={code}
-                      onClick={() => changeLang(code)}
-                      className={`w-full text-left px-4 py-3 text-sm flex items-center justify-between transition-colors cursor-pointer ${
-                        lang === code ? "text-[#E8C97A] bg-white/[0.06]" : "text-neutral-300 hover:bg-white/[0.05]"
-                      }`}
-                    >
-                      {label}
-                      {lang === code && <Check className="w-4 h-4" style={{ color: ACCENT_LIGHT }} />}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-          <button
-            onClick={() => setShowSearch(!showSearch)}
-            aria-label={s.search}
-            className="w-9 h-9 rounded-full bg-white/[0.07] backdrop-blur flex items-center justify-center hover:bg-white/[0.14] transition-colors cursor-pointer"
+    <div className="min-h-screen overflow-x-hidden bg-[#050505] text-[#f5f2ec]">
+      <header
+        className={`fixed inset-x-0 top-0 z-50 border-b transition-all duration-300 ${
+          headerSolid
+            ? "border-white/[0.07] bg-[#050505]/95 shadow-2xl shadow-black/20 backdrop-blur-xl"
+            : "border-transparent bg-gradient-to-b from-black/80 to-transparent"
+        }`}
+      >
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 md:px-8">
+          <a
+            href="#top"
+            className="flex items-center gap-3"
+            aria-label="Djanam Steak & Fish"
           >
-            <Search className="w-4 h-4" />
-          </button>
-          {!isBrowse && table && (
-            <span className="text-[11px] text-neutral-300 bg-white/[0.07] backdrop-blur px-3 py-2 rounded-full tracking-wide">
-              {s.table} {table.name.replace(/\D/g, "") || table.name}
-            </span>
-          )}
+            <img
+              src="./bull-icon.png"
+              alt=""
+              className="h-9 w-9 object-contain"
+            />
+            <span className="font-display text-base tracking-wide">Djanam</span>
+          </a>
+
+          <div className="flex items-center gap-2.5">
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowLangMenu(open => !open)}
+                aria-label={s.language}
+                aria-expanded={showLangMenu}
+                className="flex h-11 items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.07] px-3 backdrop-blur transition-colors hover:bg-white/[0.14]"
+              >
+                <Globe className="h-3.5 w-3.5 text-neutral-400" />
+                <span className="text-[11px] font-medium uppercase tracking-wider">
+                  {lang}
+                </span>
+              </button>
+              {showLangMenu && (
+                <>
+                  <button
+                    type="button"
+                    aria-label={s.close}
+                    className="fixed inset-0 z-40 cursor-default"
+                    onClick={() => setShowLangMenu(false)}
+                  />
+                  <div className="animate-fade-in absolute right-0 top-[3.25rem] z-50 w-40 overflow-hidden rounded-2xl border border-[#2b2b2b] bg-[#0e0e0e] shadow-2xl">
+                    {(
+                      [
+                        ["bg", "Български"],
+                        ["en", "English"],
+                        ["tr", "Türkçe"],
+                      ] as [Lang, string][]
+                    ).map(([code, label]) => (
+                      <button
+                        type="button"
+                        key={code}
+                        onClick={() => changeLang(code)}
+                        className={`flex min-h-11 w-full items-center justify-between px-4 py-3 text-left text-sm transition-colors ${
+                          lang === code
+                            ? "bg-white/[0.06] text-[#FF4D5E]"
+                            : "text-neutral-300 hover:bg-white/[0.05]"
+                        }`}
+                      >
+                        {label}
+                        {lang === code && <Check className="h-4 w-4" />}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowSearch(true)}
+              aria-label={s.search}
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.07] backdrop-blur transition-colors hover:bg-white/[0.14]"
+            >
+              <Search className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       </header>
 
-      {/* ─── Hero ─── */}
-      <section className="relative w-full h-[72vh] min-h-[520px] flex items-center justify-center">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(227,6,20,0.07)_0%,_transparent_65%)]" />
-        <div
-          className="animate-hero-glow absolute top-1/2 left-1/2 w-[26rem] h-[26rem] rounded-full blur-[130px]"
-          style={{ backgroundColor: ACCENT }}
-        />
-        <div className="relative text-center px-6">
-          <Reveal>
-            <div className="w-20 h-20 mx-auto mb-7">
-              <img src="./bull-icon.png" alt="Djanam" className="w-full h-full object-contain" />
-            </div>
-          </Reveal>
-          <Reveal delay={120}>
-            <p className="text-[11px] tracking-[0.4em] uppercase mb-5" style={{ color: ACCENT_LIGHT }}>
-              {s.tagline}
-            </p>
-          </Reveal>
-          <Reveal delay={220}>
-            <h1 className="font-display text-6xl md:text-8xl tracking-wide leading-none">Djanam</h1>
-          </Reveal>
-          <Reveal delay={340}>
-            <p className="mt-5 text-sm text-neutral-400 tracking-wide font-light">{s.heroSub}</p>
-          </Reveal>
-        </div>
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3">
-          <span className="text-[10px] tracking-[0.3em] uppercase text-neutral-500">{s.scroll}</span>
-          <div className="w-px h-10 bg-gradient-to-b from-neutral-500 to-transparent" />
-        </div>
-      </section>
-
-      {/* ─── Waiter toast ─── */}
-      {waiterCalled && (
-        <div className="animate-fade-in fixed top-20 left-4 right-4 z-50 mx-auto max-w-sm">
+      <main>
+        <section
+          id="top"
+          className="relative flex min-h-[520px] h-[68svh] items-center justify-center"
+        >
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(227,6,20,0.09)_0%,_transparent_64%)]" />
           <div
-            className="rounded-2xl px-5 py-4 flex items-center gap-3 text-sm backdrop-blur-md border shadow-2xl"
-            style={{ backgroundColor: `${ACCENT}18`, borderColor: `${ACCENT}45`, color: ACCENT_LIGHT }}
+            className="animate-hero-glow absolute left-1/2 top-1/2 h-[26rem] w-[26rem] rounded-full blur-[130px]"
+            style={{ backgroundColor: ACCENT }}
+          />
+          <div className="relative px-6 text-center">
+            <Reveal>
+              <img
+                src="./bull-icon.png"
+                alt=""
+                className="mx-auto mb-7 h-20 w-20 object-contain"
+              />
+            </Reveal>
+            <Reveal delay={100}>
+              <p className="mb-5 text-[11px] uppercase tracking-[0.4em] text-[#FF4D5E]">
+                {s.tagline}
+              </p>
+            </Reveal>
+            <Reveal delay={180}>
+              <h1 className="font-display text-6xl leading-none tracking-wide md:text-8xl">
+                Djanam
+              </h1>
+            </Reveal>
+            <Reveal delay={260}>
+              <p className="mt-5 text-sm font-light tracking-wide text-neutral-400">
+                {s.heroSub}
+              </p>
+            </Reveal>
+          </div>
+          <a
+            href="#menu-content"
+            className="absolute bottom-7 left-1/2 flex -translate-x-1/2 flex-col items-center gap-3 text-[#8a8a8a] transition-colors hover:text-white"
           >
-            <Bell className="w-5 h-5 shrink-0" style={{ color: ACCENT_LIGHT }} />
-            <span>{s.waiterCalled}</span>
+            <span className="whitespace-nowrap text-[10px] uppercase tracking-[0.3em]">
+              {s.scroll}
+            </span>
+            <span className="h-10 w-px bg-gradient-to-b from-current to-transparent" />
+          </a>
+        </section>
+
+        <div
+          id="menu-content"
+          className="mx-auto max-w-7xl scroll-mt-20 px-5 pb-36 pt-4 md:px-8 lg:pb-24"
+        >
+          <div className="lg:grid lg:grid-cols-[230px_minmax(0,1fr)] lg:gap-14">
+            <aside className="hidden lg:block">
+              <div className="sticky top-24 rounded-3xl border border-white/[0.07] bg-white/[0.025] p-3">
+                <p className="px-3 pb-3 pt-2 text-[10px] font-medium uppercase tracking-[0.3em] text-[#8a8a8a]">
+                  {s.categories}
+                </p>
+                <nav aria-label={s.categories} className="space-y-1">
+                  {categoryOrder.map(category => {
+                    const names = splitCatName(category.name);
+                    const Icon = categoryIcon[names.en] || UtensilsCrossed;
+                    const isActive = activeCategory === category.id;
+                    return (
+                      <button
+                        type="button"
+                        key={category.id}
+                        onClick={() => scrollToCategory(category.id)}
+                        className={`flex min-h-11 w-full items-center gap-3 rounded-2xl px-3 text-left text-sm transition-colors ${
+                          isActive
+                            ? "bg-[#E30614] text-white"
+                            : "text-neutral-400 hover:bg-white/[0.06] hover:text-white"
+                        }`}
+                      >
+                        <Icon className="h-4 w-4 shrink-0" />
+                        <span className="truncate">
+                          {categoryName(category.name)}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </nav>
+              </div>
+            </aside>
+
+            <div className="mx-auto w-full max-w-3xl">
+              <Reveal className="pb-2 pt-4">
+                <div className="flex items-center gap-4">
+                  <h2 className="text-[11px] font-medium uppercase tracking-[0.35em] text-[#FF4D5E]">
+                    {s.menu}
+                  </h2>
+                  <div className="h-px flex-1 bg-gradient-to-r from-[#2a2a2a] to-transparent" />
+                </div>
+              </Reveal>
+
+              {dataLoading && (
+                <div aria-label="Loading menu" className="space-y-10 py-10">
+                  {Array.from({ length: 4 }).map((_, index) => (
+                    <div key={index} className="space-y-4">
+                      <div className="skeleton h-7 w-44 rounded-lg" />
+                      <div className="skeleton h-20 w-full rounded-2xl" />
+                      <div className="skeleton h-20 w-full rounded-2xl" />
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {dataError && !dataLoading && (
+                <div className="my-12 rounded-3xl border border-[#E30614]/25 bg-[#E30614]/[0.06] px-6 py-10 text-center">
+                  <p className="text-neutral-300">{s.loadError}</p>
+                  <button
+                    type="button"
+                    onClick={retryLoading}
+                    className="mx-auto mt-5 flex min-h-11 items-center gap-2 rounded-full bg-[#E30614] px-5 text-sm font-medium text-white transition-transform hover:scale-105 active:scale-95"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    {s.retry}
+                  </button>
+                </div>
+              )}
+
+              {!dataLoading && !dataError && categoryOrder.length === 0 && (
+                <p className="py-16 text-center text-sm text-[#8a8a8a]">
+                  {s.noResults}
+                </p>
+              )}
+
+              {!dataLoading &&
+                !dataError &&
+                categoryOrder.map(category => {
+                  const categoryProducts =
+                    productsByCategory[category.id] || [];
+                  const names = splitCatName(category.name);
+                  const Icon = categoryIcon[names.en] || UtensilsCrossed;
+                  const subtitle = categorySubtitle[lang][names.en] || "";
+
+                  return (
+                    <section
+                      key={category.id}
+                      id={`cat-section-${category.id}`}
+                      className="scroll-mt-24 pt-10"
+                    >
+                      <Reveal>
+                        <div className="mb-1 flex items-end justify-between gap-4">
+                          <div className="flex items-center gap-3.5">
+                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#E30614]/30 bg-[#E30614]/[0.08]">
+                              <Icon className="h-[18px] w-[18px] text-[#FF4D5E]" />
+                            </span>
+                            <div>
+                              <h3 className="font-display text-2xl leading-tight">
+                                {categoryName(category.name)}
+                              </h3>
+                              {subtitle && (
+                                <p className="mt-0.5 text-[11px] tracking-wide text-[#8a8a8a]">
+                                  {subtitle}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <span className="shrink-0 text-[11px] tabular-nums text-[#777]">
+                            {categoryProducts.length} {s.items}
+                          </span>
+                        </div>
+                        <div className="mb-2 mt-4 h-px bg-gradient-to-r from-[#E30614]/30 to-transparent" />
+                      </Reveal>
+
+                      <div>
+                        {categoryProducts.map((product, index) => (
+                          <Reveal
+                            key={product.id}
+                            delay={Math.min(index * 35, 175)}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => setSelectedProduct(product)}
+                              className="group w-full border-b border-[#151515] py-4 text-left last:border-0"
+                            >
+                              <span className="flex items-center gap-4">
+                                {product.image && (
+                                  <span className="block h-16 w-16 shrink-0 overflow-hidden rounded-2xl border border-[#222] bg-[#0d0d0d]">
+                                    <img
+                                      src={product.image}
+                                      alt={productName(product)}
+                                      loading="lazy"
+                                      onError={event => {
+                                        const wrapper =
+                                          event.currentTarget.closest("span");
+                                        if (wrapper)
+                                          wrapper.style.display = "none";
+                                      }}
+                                      className="animate-photo-in h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                    />
+                                  </span>
+                                )}
+                                <span className="min-w-0 flex-1">
+                                  <span className="flex items-start justify-between gap-4">
+                                    <span className="font-display text-[17px] leading-snug transition-colors group-hover:text-[#FF4D5E]">
+                                      {productName(product)}
+                                    </span>
+                                    <span className="flex shrink-0 flex-col items-end">
+                                      <span className="font-display text-lg tabular-nums text-[#FF4D5E]">
+                                        {Number(product.priceEur).toFixed(2)}
+                                        <span className="ml-0.5 text-sm">
+                                          €
+                                        </span>
+                                      </span>
+                                      <span className="text-[11px] tabular-nums text-[#777]">
+                                        {Number(product.priceBgn).toFixed(2)}{" "}
+                                        лв.
+                                      </span>
+                                    </span>
+                                  </span>
+                                  <span className="mt-1 flex items-start gap-3">
+                                    {product.weight && (
+                                      <span className="shrink-0 text-[10px] uppercase tracking-wide text-[#8a8a8a]">
+                                        {product.weight}
+                                      </span>
+                                    )}
+                                    {productDescription(product) && (
+                                      <span className="line-clamp-2 text-xs font-light leading-relaxed text-[#8a8a8a]">
+                                        {productDescription(product)}
+                                      </span>
+                                    )}
+                                  </span>
+                                </span>
+                              </span>
+                            </button>
+                          </Reveal>
+                        ))}
+                      </div>
+                    </section>
+                  );
+                })}
+
+              <Reveal className="mt-16">
+                <section className="space-y-5 border-t border-[#141414] py-10 text-center">
+                  <p className="text-[10px] uppercase tracking-[0.35em] text-[#8a8a8a]">
+                    {s.shareNight}
+                  </p>
+                  <h3 className="font-display text-3xl">{s.stayLoop}</h3>
+                  <a
+                    href="https://instagram.com/djanam.restaurant"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex min-h-11 items-center gap-2.5 text-sm text-neutral-400 transition-colors hover:text-white"
+                  >
+                    <Instagram className="h-4 w-4 text-[#FF4D5E]" />
+                    @djanam.restaurant
+                  </a>
+                  <p className="mx-auto max-w-xs text-xs text-[#777]">
+                    {s.tagUs}
+                  </p>
+                </section>
+              </Reveal>
+
+              <footer className="border-t border-[#141414] pb-2 pt-6 text-center">
+                <img
+                  src="./bull-icon.png"
+                  alt=""
+                  className="mx-auto mb-3 h-8 w-8 object-contain opacity-30"
+                />
+                <p className="text-[10px] uppercase tracking-[0.25em] text-[#777]">
+                  Djanam Steak & Fish
+                </p>
+              </footer>
+            </div>
           </div>
         </div>
-      )}
+      </main>
 
-      {/* ─── Search overlay ─── */}
       {showSearch && (
-        <div className="animate-fade-in fixed inset-0 z-50 bg-black/85 backdrop-blur-md" onClick={() => setShowSearch(false)}>
-          <div className="max-w-lg mx-auto px-5 pt-24" onClick={(e) => e.stopPropagation()}>
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={s.search}
+          className="animate-fade-in fixed inset-0 z-[60] bg-black/85 backdrop-blur-md"
+          onMouseDown={event =>
+            event.target === event.currentTarget && setShowSearch(false)
+          }
+        >
+          <div className="mx-auto max-w-xl px-5 pt-20 md:pt-24">
             <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500" />
+              <label htmlFor="menu-search" className="sr-only">
+                {s.search}
+              </label>
+              <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8a8a8a]" />
               <input
-                autoFocus
+                id="menu-search"
+                ref={searchInputRef}
+                type="search"
                 placeholder={s.search}
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-11 pr-11 py-3.5 bg-[#111] border border-[#2a2a2a] rounded-2xl text-white placeholder:text-neutral-600 focus:outline-none focus:border-[#E30614]/50 text-base"
+                onChange={event => setSearchQuery(event.target.value)}
+                className="w-full rounded-2xl border border-[#2a2a2a] bg-[#111] py-4 pl-11 pr-12 text-base text-white placeholder:text-[#8a8a8a] focus:border-[#E30614]/60 focus:outline-none"
               />
               <button
-                onClick={() => { setSearchQuery(""); setShowSearch(false); }}
-                aria-label="Close search"
-                className="absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors cursor-pointer"
+                type="button"
+                onClick={() => {
+                  setSearchQuery("");
+                  setShowSearch(false);
+                }}
+                aria-label={s.close}
+                className="absolute right-2.5 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full transition-colors hover:bg-white/10"
               >
-                <X className="w-3.5 h-3.5" />
+                <X className="h-4 w-4" />
               </button>
             </div>
 
             {searchQuery.trim() && (
-              <div className="mt-4 max-h-[55vh] overflow-y-auto rounded-2xl border border-[#1f1f1f] bg-[#0b0b0b] divide-y divide-[#161616]">
-                {searchResults.length === 0 && (
-                  <p className="p-5 text-sm text-neutral-500">{s.noResults}</p>
+              <div className="mt-4 max-h-[65vh] overflow-y-auto rounded-2xl border border-[#1f1f1f] bg-[#0b0b0b] divide-y divide-[#181818]">
+                {filteredProducts.length === 0 && (
+                  <p className="p-5 text-sm text-[#8a8a8a]">{s.noResults}</p>
                 )}
-                {searchResults.map((p) => (
+                {filteredProducts.map(product => (
                   <button
-                    key={p.id}
-                    onClick={() => { setSelectedProduct(p); setShowSearch(false); }}
-                    className="w-full text-left px-5 py-3.5 flex items-center justify-between gap-4 hover:bg-white/[0.04] transition-colors cursor-pointer"
+                    type="button"
+                    key={product.id}
+                    onClick={() => {
+                      setSelectedProduct(product);
+                      setShowSearch(false);
+                    }}
+                    className="flex min-h-16 w-full items-center justify-between gap-4 px-5 py-3.5 text-left transition-colors hover:bg-white/[0.04]"
                   >
-                    <div className="min-w-0">
-                      <p className="font-display text-[15px] truncate">{productName(p)}</p>
-                      {productDesc(p) && (
-                        <p className="text-xs text-neutral-500 truncate mt-0.5">{productDesc(p)}</p>
+                    <span className="min-w-0">
+                      <span className="block truncate font-display text-[15px]">
+                        {productName(product)}
+                      </span>
+                      {productDescription(product) && (
+                        <span className="mt-0.5 block truncate text-xs text-[#8a8a8a]">
+                          {productDescription(product)}
+                        </span>
                       )}
-                    </div>
-                    <span className="shrink-0 font-display text-lg" style={{ color: ACCENT_LIGHT }}>
-                      {Number(p.priceEur).toFixed(2)}€
+                    </span>
+                    <span className="shrink-0 font-display text-lg text-[#FF4D5E]">
+                      {Number(product.priceEur).toFixed(2)}€
                     </span>
                   </button>
                 ))}
@@ -715,384 +883,75 @@ export default function Menu() {
         </div>
       )}
 
-      {/* ─── Menu sections ─── */}
-      <main className="max-w-2xl mx-auto px-5 pb-44">
-        <Reveal className="pt-4 pb-2">
-          <div className="flex items-center gap-4">
-            <h2 className="text-[11px] tracking-[0.35em] uppercase font-medium" style={{ color: ACCENT_LIGHT }}>
-              {s.explore}
-            </h2>
-            <div className="flex-1 h-px bg-gradient-to-r from-[#2a2a2a] to-transparent" />
-          </div>
-        </Reveal>
-
-        {dataLoading &&
-          Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="py-8 space-y-4">
-              <div className="skeleton h-6 w-40 rounded" />
-              <div className="skeleton h-4 w-full rounded" />
-              <div className="skeleton h-4 w-3/4 rounded" />
-              <div className="skeleton h-4 w-5/6 rounded" />
-            </div>
-          ))}
-
-        {categoryOrder?.map((cat) => {
-          const catProducts = productsByCategory[cat.id] || [];
-          const names = splitCatName(cat.name);
-          const Icon = categoryIcon[names.en] || UtensilsCrossed;
-          const subtitle = categorySubtitle[lang][names.en] || "";
-
-          return (
-            <section key={cat.id} id={`cat-section-${cat.id}`} className="scroll-mt-24 pt-10">
-              <Reveal>
-                <div className="flex items-end justify-between mb-1">
-                  <div className="flex items-center gap-3.5">
-                    <span
-                      className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 border"
-                      style={{ backgroundColor: `${ACCENT}12`, borderColor: `${ACCENT}30` }}
-                    >
-                      <Icon className="w-[18px] h-[18px]" style={{ color: ACCENT_LIGHT }} />
-                    </span>
-                    <div>
-                      <h3 className="font-display text-2xl leading-tight">
-                        {catName(cat.name)}
-                      </h3>
-                      {subtitle && <p className="text-[11px] text-neutral-500 mt-0.5 tracking-wide">{subtitle}</p>}
-                    </div>
-                  </div>
-                  <span className="text-[11px] text-neutral-600 tabular-nums">
-                    {catProducts.length} {s.items}
-                  </span>
-                </div>
-                <div className="h-px mt-4 mb-2" style={{ background: `linear-gradient(to right, ${ACCENT}50, transparent)` }} />
-              </Reveal>
-
-              <div>
-                {catProducts.map((p, idx) => (
-                  <Reveal key={p.id} delay={Math.min(idx * 40, 200)}>
-                    <div
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => setSelectedProduct(p)}
-                      onKeyDown={(e) => e.key === "Enter" && setSelectedProduct(p)}
-                      className="w-full text-left py-4 group cursor-pointer border-b border-[#121212] last:border-0"
-                    >
-                      <div className="flex items-center gap-4">
-                        {/* Product photo (when available) */}
-                        {p.image && (
-                          <span className="block w-16 h-16 rounded-2xl overflow-hidden shrink-0 border border-[#222] bg-[#0d0d0d]">
-                            <img
-                              src={p.image}
-                              alt={productName(p)}
-                              loading="lazy"
-                              onError={(e) => {
-                                const wrap = e.currentTarget.closest("span");
-                                if (wrap) wrap.style.display = "none";
-                              }}
-                              className="animate-photo-in w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
-                            />
-                          </span>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-baseline justify-between gap-4">
-                            <h4 className="font-display text-[17px] leading-snug group-hover:text-[#FF4D5E] transition-colors duration-300">
-                              {productName(p)}
-                            </h4>
-                            <div className="flex items-baseline gap-2 shrink-0">
-                              <span className="font-display text-lg tabular-nums" style={{ color: ACCENT_LIGHT }}>
-                                {Number(p.priceEur).toFixed(2)}
-                                <span className="text-sm ml-0.5">€</span>
-                              </span>
-                              <span className="text-[11px] text-neutral-600 tabular-nums">
-                                {Number(p.priceBgn).toFixed(2)} лв.
-                              </span>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3 mt-1">
-                            {p.weight && (
-                              <span className="text-[10px] text-neutral-500 tracking-wide uppercase shrink-0">
-                                {p.weight}
-                              </span>
-                            )}
-                            {productDesc(p) && (
-                              <p className="text-xs text-neutral-500 line-clamp-2 leading-relaxed font-light">
-                                {productDesc(p)}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Add to order */}
-                        {!isBrowse && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              addToCart(p);
-                            }}
-                            aria-label={`${s.addToOrder}: ${productName(p)}`}
-                            className="relative shrink-0 w-9 h-9 rounded-full border flex items-center justify-center transition-all duration-300 cursor-pointer hover:scale-110 active:scale-95"
-                            style={
-                              cart[p.id]
-                                ? { backgroundColor: ACCENT, borderColor: ACCENT }
-                                : { borderColor: `${ACCENT}60`, backgroundColor: `${ACCENT}10` }
-                            }
-                          >
-                            <Plus className="w-4 h-4" style={{ color: cart[p.id] ? "#fff" : ACCENT_LIGHT }} />
-                            {cart[p.id] && (
-                              <span className="absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1 rounded-full bg-white text-black text-[11px] font-semibold flex items-center justify-center">
-                                {cart[p.id].qty}
-                              </span>
-                            )}
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </Reveal>
-                ))}
-              </div>
-            </section>
-          );
-        })}
-
-        {/* ─── Instagram ─── */}
-        <Reveal className="mt-16">
-          <section className="text-center space-y-5 py-10 border-t border-[#141414]">
-            <p className="text-[10px] tracking-[0.35em] uppercase text-neutral-500">{s.shareNight}</p>
-            <h3 className="font-display text-3xl">
-              {s.stayLoop}
-            </h3>
-            <a
-              href="https://instagram.com/djanam.restaurant"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2.5 text-sm text-neutral-400 hover:text-white transition-colors cursor-pointer"
-            >
-              <Instagram className="w-4 h-4" style={{ color: ACCENT_LIGHT }} />
-              @djanam.restaurant
-            </a>
-            <p className="text-xs text-neutral-600 max-w-xs mx-auto">{s.tagUs}</p>
-          </section>
-        </Reveal>
-
-        <footer className="pt-6 pb-2 text-center border-t border-[#141414]">
-          <div className="w-8 h-8 mx-auto mb-3 opacity-30">
-            <img src="./bull-icon.png" alt="" className="w-full h-full object-contain" />
-          </div>
-          <p className="text-[10px] text-neutral-700 tracking-[0.25em] uppercase">Djanam Steak & Fish</p>
-        </footer>
-      </main>
-
-      {/* ─── Bottom category nav ─── */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-gradient-to-t from-black via-black/95 to-transparent pt-10 pb-4">
-        <div className="flex gap-2 overflow-x-auto px-4 pb-1 scrollbar-hide">
-          {categoryOrder?.map((cat) => {
-            const names = splitCatName(cat.name);
-            const Icon = categoryIcon[names.en] || UtensilsCrossed;
-            const isActive = activeCategory === cat.id;
-            return (
-              <button
-                key={cat.id}
-                onClick={() => scrollToCategory(cat.id)}
-                aria-label={catName(cat.name)}
-                className={`shrink-0 flex items-center gap-2 px-4 h-11 rounded-2xl text-xs transition-all duration-300 border cursor-pointer ${
-                  isActive
-                    ? "text-white font-medium"
-                    : "bg-white/[0.05] text-neutral-400 border-white/10 hover:bg-white/10 hover:text-white"
-                }`}
-                style={isActive ? { backgroundColor: ACCENT, borderColor: ACCENT } : undefined}
-              >
-                <Icon className="w-4 h-4" />
-                <span>{catName(cat.name)}</span>
-              </button>
-            );
-          })}
-        </div>
-      </nav>
-
-      {/* ─── Floating waiter button ─── */}
-      {!isBrowse && (
-        <button
-          onClick={handleCallWaiter}
-          aria-label={s.callWaiter}
-          className="fixed bottom-24 right-4 z-40 w-12 h-12 rounded-full flex items-center justify-center shadow-lg shadow-black/50 transition-transform hover:scale-110 active:scale-95 cursor-pointer"
-          style={{ backgroundColor: ACCENT }}
-        >
-          <Bell className="w-5 h-5 text-white" />
-        </button>
-      )}
-
-      {/* ─── Order sent toast ─── */}
-      {orderSent && (
-        <div className="animate-fade-in fixed top-20 left-4 right-4 z-50 mx-auto max-w-sm">
-          <div
-            className="rounded-2xl px-5 py-4 flex items-center gap-3 text-sm backdrop-blur-md border shadow-2xl"
-            style={{ backgroundColor: `${ACCENT}18`, borderColor: `${ACCENT}45`, color: "#fff" }}
-          >
-            <ShoppingBag className="w-5 h-5 shrink-0" style={{ color: ACCENT_LIGHT }} />
-            <div>
-              <p className="font-medium">{s.orderSent}</p>
-              <p className="text-xs text-neutral-400 mt-0.5">{s.orderSentSub}</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ─── Floating cart bar ─── */}
-      {!isBrowse && cartCount > 0 && !cartOpen && (
-        <button
-          onClick={() => setCartOpen(true)}
-          className="animate-fade-in fixed bottom-24 left-4 right-20 z-40 flex items-center justify-between gap-3 px-5 py-3.5 rounded-2xl text-white shadow-lg shadow-black/50 transition-transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-          style={{ backgroundColor: ACCENT }}
-        >
-          <span className="flex items-center gap-2.5 text-sm font-medium">
-            <ShoppingBag className="w-[18px] h-[18px]" />
-            {cartCount} {s.items}
-          </span>
-          <span className="flex items-center gap-2 text-sm">
-            <span className="font-display text-lg tabular-nums">{cartTotalEur.toFixed(2)}€</span>
-            <span className="text-white/70 text-xs tabular-nums">{cartTotalBgn.toFixed(2)} лв.</span>
-          </span>
-        </button>
-      )}
-
-      {/* ─── Cart sheet ─── */}
-      {cartOpen && (
-        <div className="fixed inset-0 z-50" role="dialog" aria-modal="true">
-          <div
-            className="animate-fade-in absolute inset-0 bg-black/75 backdrop-blur-sm"
-            onClick={() => setCartOpen(false)}
-          />
-          <div className="animate-sheet-up absolute bottom-0 left-0 right-0 max-w-lg mx-auto max-h-[85vh] flex flex-col bg-[#0b0b0b] border-t border-[#262626] rounded-t-[2rem]">
-            <div className="pt-3 pb-2 bg-[#0b0b0b] flex justify-center rounded-t-[2rem]">
-              <div className="w-10 h-1 rounded-full bg-neutral-700" />
-            </div>
-            <div className="px-7 pb-3 flex items-center justify-between">
-              <h2 className="font-display text-2xl">{s.order}</h2>
-              <button
-                onClick={() => setCartOpen(false)}
-                aria-label="Close"
-                className="w-9 h-9 rounded-full bg-white/[0.07] flex items-center justify-center hover:bg-white/[0.14] transition-colors cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto px-7">
-              {cartItems.length === 0 && (
-                <p className="py-8 text-center text-sm text-neutral-500">{s.emptyOrder}</p>
-              )}
-              <div className="divide-y divide-[#161616]">
-                {cartItems.map((i) => (
-                  <div key={i.p.id} className="py-4 flex items-center gap-4">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-display text-[15px] leading-snug">{productName(i.p)}</p>
-                      {i.notes && <p className="text-[11px] text-neutral-500 mt-0.5 truncate">{i.notes}</p>}
-                      <p className="text-xs tabular-nums mt-1" style={{ color: ACCENT_LIGHT }}>
-                        {(Number(i.p.priceEur) * i.qty).toFixed(2)}€
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3 shrink-0">
-                      <button
-                        onClick={() => setCartQty(i.p.id, i.qty - 1)}
-                        aria-label="Minus"
-                        className="w-8 h-8 rounded-full bg-white/[0.07] flex items-center justify-center hover:bg-white/[0.14] transition-colors cursor-pointer"
-                      >
-                        <Minus className="w-3.5 h-3.5" />
-                      </button>
-                      <span className="w-5 text-center text-sm tabular-nums">{i.qty}</span>
-                      <button
-                        onClick={() => setCartQty(i.p.id, i.qty + 1)}
-                        aria-label="Plus"
-                        className="w-8 h-8 rounded-full bg-white/[0.07] flex items-center justify-center hover:bg-white/[0.14] transition-colors cursor-pointer"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {cartItems.length > 0 && (
-              <div className="px-7 pt-4 pb-8 space-y-4 border-t border-[#1c1c1c] bg-[#0b0b0b]">
-                <div className="flex items-end justify-between">
-                  <span className="text-xs uppercase tracking-wider text-neutral-500">{s.total}</span>
-                  <div className="flex items-baseline gap-2">
-                    <span className="font-display text-2xl tabular-nums" style={{ color: ACCENT_LIGHT }}>
-                      {cartTotalEur.toFixed(2)}€
-                    </span>
-                    <span className="text-xs text-neutral-500 tabular-nums">{cartTotalBgn.toFixed(2)} лв.</span>
-                  </div>
-                </div>
-                <button
-                  onClick={submitOrder}
-                  disabled={createOrder.isPending}
-                  className="w-full flex items-center justify-center gap-2.5 text-white font-medium py-4 rounded-2xl text-[15px] transition-transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer disabled:opacity-60 disabled:pointer-events-none"
-                  style={{ backgroundColor: ACCENT }}
-                >
-                  <ShoppingBag className="w-[18px] h-[18px]" />
-                  {createOrder.isPending ? s.sending : s.sendOrder}
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ─── Product bottom sheet ─── */}
       {selectedProduct && (
-        <div className="fixed inset-0 z-50" role="dialog" aria-modal="true">
-          <div
-            className="animate-fade-in absolute inset-0 bg-black/75 backdrop-blur-sm"
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="product-title"
+          className="fixed inset-0 z-[60]"
+        >
+          <button
+            type="button"
+            aria-label={s.close}
+            className="animate-fade-in absolute inset-0 h-full w-full cursor-default bg-black/75 backdrop-blur-sm"
             onClick={() => setSelectedProduct(null)}
           />
-          <div className="animate-sheet-up absolute bottom-0 left-0 right-0 max-w-lg mx-auto max-h-[85vh] overflow-y-auto bg-[#0b0b0b] border-t border-[#262626] rounded-t-[2rem] pb-10">
-            {/* Handle */}
-            <div className="sticky top-0 pt-3 pb-2 bg-[#0b0b0b] flex justify-center rounded-t-[2rem]">
-              <div className="w-10 h-1 rounded-full bg-neutral-700" />
+          <div className="animate-sheet-up absolute bottom-0 left-0 right-0 mx-auto max-h-[88svh] max-w-xl overflow-y-auto rounded-t-[2rem] border-t border-[#262626] bg-[#0b0b0b] pb-10 shadow-2xl">
+            <div className="sticky top-0 z-10 flex justify-center rounded-t-[2rem] bg-[#0b0b0b] pb-2 pt-3">
+              <div className="h-1 w-10 rounded-full bg-neutral-700" />
             </div>
             <button
+              type="button"
               onClick={() => setSelectedProduct(null)}
-              aria-label="Close"
-              className="absolute top-4 right-5 w-9 h-9 rounded-full bg-white/[0.07] flex items-center justify-center hover:bg-white/[0.14] transition-colors cursor-pointer"
+              aria-label={s.close}
+              className="absolute right-4 top-3 z-20 flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.07] transition-colors hover:bg-white/[0.14]"
             >
-              <X className="w-4 h-4" />
+              <X className="h-4 w-4" />
             </button>
 
-            <div className="px-7 pt-4 space-y-6">
+            <div className="space-y-6 px-6 pt-4 md:px-8">
               {sheetImages.length > 0 && (
-                <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-[#111]">
+                <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-[#111]">
                   <img
-                    key={sheetImages[imgIdx]}
-                    src={sheetImages[imgIdx]}
+                    key={sheetImages[imageIndex]}
+                    src={sheetImages[imageIndex]}
                     alt={productName(selectedProduct)}
-                    onError={(e) => {
-                      const wrap = e.currentTarget.closest("div");
-                      if (wrap) wrap.style.display = "none";
+                    onError={event => {
+                      const wrapper = event.currentTarget.closest("div");
+                      if (wrapper) wrapper.style.display = "none";
                     }}
-                    className="animate-photo-in animate-kenburns w-full h-full object-cover"
+                    className="animate-photo-in h-full w-full object-cover"
                   />
                   {sheetImages.length > 1 && (
                     <>
                       <button
-                        onClick={() => setImgIdx((imgIdx - 1 + sheetImages.length) % sheetImages.length)}
+                        type="button"
+                        onClick={() =>
+                          setImageIndex(
+                            (imageIndex - 1 + sheetImages.length) %
+                              sheetImages.length
+                          )
+                        }
                         aria-label="Previous photo"
-                        className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/60 backdrop-blur flex items-center justify-center hover:bg-black/80 transition-colors cursor-pointer"
+                        className="absolute left-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 backdrop-blur transition-colors hover:bg-black/80"
                       >
-                        <ChevronLeft className="w-4 h-4" />
+                        <ChevronLeft className="h-4 w-4" />
                       </button>
                       <button
-                        onClick={() => setImgIdx((imgIdx + 1) % sheetImages.length)}
+                        type="button"
+                        onClick={() =>
+                          setImageIndex((imageIndex + 1) % sheetImages.length)
+                        }
                         aria-label="Next photo"
-                        className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/60 backdrop-blur flex items-center justify-center hover:bg-black/80 transition-colors cursor-pointer"
+                        className="absolute right-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 backdrop-blur transition-colors hover:bg-black/80"
                       >
-                        <ChevronRight className="w-4 h-4" />
+                        <ChevronRight className="h-4 w-4" />
                       </button>
-                      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-                        {sheetImages.map((_, i) => (
+                      <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
+                        {sheetImages.map((_, index) => (
                           <span
-                            key={i}
-                            className={`w-1.5 h-1.5 rounded-full transition-colors ${i === imgIdx ? "bg-white" : "bg-white/40"}`}
+                            key={index}
+                            className={`h-1.5 w-1.5 rounded-full ${index === imageIndex ? "bg-white" : "bg-white/40"}`}
                           />
                         ))}
                       </div>
@@ -1102,89 +961,84 @@ export default function Menu() {
               )}
 
               <div>
-                <span className="text-[10px] tracking-[0.25em] uppercase font-medium" style={{ color: ACCENT_LIGHT }}>
-                  {selectedProduct.category?.name ? catName(selectedProduct.category.name) : s.menu}
+                <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-[#FF4D5E]">
+                  {selectedProduct.category?.name
+                    ? categoryName(selectedProduct.category.name)
+                    : s.menu}
                 </span>
-                <h2 className="font-display text-3xl leading-tight mt-2">{productName(selectedProduct)}</h2>
-                {lang === "bg" && selectedProduct.nameEn && selectedProduct.nameEn !== selectedProduct.name && (
-                  <p className="text-sm text-neutral-500 mt-1 font-light italic">{selectedProduct.nameEn}</p>
-                )}
+                <h2
+                  id="product-title"
+                  className="mt-2 font-display text-3xl leading-tight"
+                >
+                  {productName(selectedProduct)}
+                </h2>
+                {lang === "bg" &&
+                  selectedProduct.nameEn &&
+                  selectedProduct.nameEn !== selectedProduct.name && (
+                    <p className="mt-1 text-sm font-light italic text-[#8a8a8a]">
+                      {selectedProduct.nameEn}
+                    </p>
+                  )}
               </div>
 
-              {productDesc(selectedProduct) && (
-                <p className="text-sm text-neutral-400 leading-relaxed font-light">
-                  {productDesc(selectedProduct)}
+              {productDescription(selectedProduct) && (
+                <p className="text-sm font-light leading-relaxed text-neutral-400">
+                  {productDescription(selectedProduct)}
                 </p>
               )}
 
               {selectedProduct.weight && (
-                <div className="flex items-center gap-2 text-xs text-neutral-500">
+                <div className="flex items-center gap-2 text-xs text-[#8a8a8a]">
                   <span className="uppercase tracking-wider">{s.weight}</span>
-                  <span className="text-neutral-300">{selectedProduct.weight}</span>
+                  <span className="text-neutral-300">
+                    {selectedProduct.weight}
+                  </span>
                 </div>
               )}
 
               <div className="h-px bg-[#1c1c1c]" />
-
               <div className="flex items-end justify-between">
-                <div className="flex items-baseline gap-2">
-                  <span className="font-display text-4xl tabular-nums" style={{ color: ACCENT_LIGHT }}>
-                    {Number(selectedProduct.priceEur).toFixed(2)}
-                  </span>
-                  <span className="text-lg" style={{ color: ACCENT_LIGHT }}>€</span>
-                </div>
-                <span className="text-sm text-neutral-500 tabular-nums">
+                <span className="flex items-baseline gap-1 font-display text-4xl tabular-nums text-[#FF4D5E]">
+                  {Number(selectedProduct.priceEur).toFixed(2)}
+                  <span className="text-lg">€</span>
+                </span>
+                <span className="text-sm tabular-nums text-[#8a8a8a]">
                   {Number(selectedProduct.priceBgn).toFixed(2)} лв.
                 </span>
               </div>
-
-              {!isBrowse && (
-                <div className="space-y-4">
-                  {/* Quantity stepper */}
-                  <div className="flex items-center justify-center gap-6">
-                    <button
-                      onClick={() => setSheetQty(Math.max(1, sheetQty - 1))}
-                      aria-label="Minus"
-                      className="w-11 h-11 rounded-full bg-white/[0.07] flex items-center justify-center hover:bg-white/[0.14] transition-colors cursor-pointer"
-                    >
-                      <Minus className="w-4 h-4" />
-                    </button>
-                    <span className="font-display text-2xl w-8 text-center tabular-nums">{sheetQty}</span>
-                    <button
-                      onClick={() => setSheetQty(sheetQty + 1)}
-                      aria-label="Plus"
-                      className="w-11 h-11 rounded-full bg-white/[0.07] flex items-center justify-center hover:bg-white/[0.14] transition-colors cursor-pointer"
-                    >
-                      <Plus className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                  {/* Notes */}
-                  <input
-                    value={sheetNotes}
-                    onChange={(e) => setSheetNotes(e.target.value)}
-                    placeholder={s.notesPlaceholder}
-                    aria-label={s.notesLabel}
-                    className="w-full px-4 py-3 bg-[#111] border border-[#262626] rounded-xl text-sm text-white placeholder:text-neutral-600 focus:outline-none focus:border-[#E30614]/50"
-                  />
-
-                  {/* Add to order */}
-                  <button
-                    onClick={() => {
-                      addToCart(selectedProduct, sheetQty, sheetNotes.trim() || undefined);
-                      setSelectedProduct(null);
-                    }}
-                    className="w-full flex items-center justify-center gap-2.5 text-white font-medium py-4 rounded-2xl text-[15px] transition-transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-                    style={{ backgroundColor: ACCENT }}
-                  >
-                    <ShoppingBag className="w-[18px] h-[18px]" />
-                    {s.addToOrder} · {(Number(selectedProduct.priceEur) * sheetQty).toFixed(2)}€
-                  </button>
-                </div>
-              )}
             </div>
           </div>
         </div>
+      )}
+
+      {!dataLoading && !dataError && categoryOrder.length > 0 && (
+        <nav
+          aria-label={s.categories}
+          className="fixed inset-x-0 bottom-0 z-40 bg-gradient-to-t from-black via-black/95 to-transparent pb-[max(1rem,env(safe-area-inset-bottom))] pt-10 lg:hidden"
+        >
+          <div className="scrollbar-hide flex gap-2 overflow-x-auto px-4 pb-1">
+            {categoryOrder.map(category => {
+              const names = splitCatName(category.name);
+              const Icon = categoryIcon[names.en] || UtensilsCrossed;
+              const isActive = activeCategory === category.id;
+              return (
+                <button
+                  type="button"
+                  key={category.id}
+                  onClick={() => scrollToCategory(category.id)}
+                  className={`flex h-11 shrink-0 items-center gap-2 rounded-2xl border px-4 text-xs transition-colors ${
+                    isActive
+                      ? "border-[#E30614] bg-[#E30614] font-medium text-white"
+                      : "border-white/10 bg-[#111] text-neutral-400 hover:bg-[#1a1a1a] hover:text-white"
+                  }`}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span>{categoryName(category.name)}</span>
+                </button>
+              );
+            })}
+          </div>
+        </nav>
       )}
     </div>
   );
