@@ -174,7 +174,7 @@ const t = {
     shareNight: "Споделете вечерта",
     stayLoop: "Последвайте ни",
     tagUs: "Отбележете ни в сторито си — може да получите изненада",
-    weight: "Грамаж",
+    weight: "Количество",
     close: "Затвори",
     language: "Избор на език",
     loadError: "Менюто не можа да се зареди.",
@@ -192,7 +192,7 @@ const t = {
     shareNight: "Share the night",
     stayLoop: "Stay in the loop",
     tagUs: "Tag us in your story — you might get a surprise",
-    weight: "Weight",
+    weight: "Serving",
     close: "Close",
     language: "Choose language",
     loadError: "The menu could not be loaded.",
@@ -210,7 +210,7 @@ const t = {
     shareNight: "Geceyi paylaşın",
     stayLoop: "Bizi takip edin",
     tagUs: "Hikayenizde bizi etiketleyin — sürpriz kazanabilirsiniz",
-    weight: "Gramaj",
+    weight: "Porsiyon",
     close: "Kapat",
     language: "Dil seçin",
     loadError: "Menü yüklenemedi.",
@@ -219,10 +219,91 @@ const t = {
 } as const;
 
 const ACCENT = "#E30614";
+const MENU_IMAGE_BASE = "./images/menu";
+
+const categoryImage: Record<string, string> = {
+  Salads: `${MENU_IMAGE_BASE}/salad.webp`,
+  Appetizer: `${MENU_IMAGE_BASE}/appetizer.webp`,
+  Bread: `${MENU_IMAGE_BASE}/bread.webp`,
+  Starters: `${MENU_IMAGE_BASE}/appetizer.webp`,
+  Beef: `${MENU_IMAGE_BASE}/steak.webp`,
+  Lamb: `${MENU_IMAGE_BASE}/steak.webp`,
+  Poultry: `${MENU_IMAGE_BASE}/poultry.webp`,
+  Fish: `${MENU_IMAGE_BASE}/fish.webp`,
+  Desserts: `${MENU_IMAGE_BASE}/dessert.webp`,
+  Whiskey: `${MENU_IMAGE_BASE}/cocktail.webp`,
+  "Gin & Rum": `${MENU_IMAGE_BASE}/cocktail.webp`,
+  Vodka: `${MENU_IMAGE_BASE}/cocktail.webp`,
+  "Anise Drinks": `${MENU_IMAGE_BASE}/cocktail.webp`,
+  Rakia: `${MENU_IMAGE_BASE}/cocktail.webp`,
+  Liquors: `${MENU_IMAGE_BASE}/cocktail.webp`,
+  Tequila: `${MENU_IMAGE_BASE}/cocktail.webp`,
+  Beer: `${MENU_IMAGE_BASE}/beer.webp`,
+  "Soft Drinks": `${MENU_IMAGE_BASE}/cocktail.webp`,
+  "Fresh Juices": `${MENU_IMAGE_BASE}/cocktail.webp`,
+  "Hot Drinks": `${MENU_IMAGE_BASE}/coffee.webp`,
+};
+
+const unitLabel: Record<Lang, { g: string; ml: string; l: string }> = {
+  bg: { g: "г", ml: "мл", l: "л" },
+  en: { g: "g", ml: "ml", l: "l" },
+  tr: { g: "g", ml: "ml", l: "l" },
+};
+
+const priceFormatter: Record<Lang, Intl.NumberFormat> = {
+  bg: new Intl.NumberFormat("bg-BG", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }),
+  en: new Intl.NumberFormat("en-GB", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }),
+  tr: new Intl.NumberFormat("tr-TR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }),
+};
 
 function splitCatName(full: string): { bg: string; en: string } {
   const parts = full.split(" / ");
   return { bg: parts[0], en: parts[1] || parts[0] };
+}
+
+function stripTrailingServing(name: string): string {
+  return name
+    .replace(/\s+\d+(?:[.,]\d+)?\s*(?:мл|ml|л|l|гр|г|gr|g)\.?$/i, "")
+    .trim();
+}
+
+function formatServing(value: string, lang: Lang): string {
+  const units = unitLabel[lang];
+  return value
+    .trim()
+    .replace(/(\d+(?:[.,]\d+)?)\s*(?:мл|ml)(?=$|\s|\/)/gi, `$1 ${units.ml}`)
+    .replace(/(\d+(?:[.,]\d+)?)\s*(?:гр|г|gr|g)(?=$|\s|\/)/gi, `$1 ${units.g}`)
+    .replace(/(\d+(?:[.,]\d+)?)\s*(?:л|l)(?=$|\s|\/)/gi, `$1 ${units.l}`)
+    .replace(/\s*\/\s*/g, " / ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function formatPrice(value: string, lang: Lang): string {
+  const number = Number(value);
+  return Number.isFinite(number) ? priceFormatter[lang].format(number) : value;
+}
+
+function customProductImages(product: ProductItem): string[] {
+  const gallery = product.images?.filter(Boolean) ?? [];
+  if (gallery.length) return gallery;
+  return product.image ? [product.image] : [];
+}
+
+function fallbackImageForProduct(product: ProductItem): string {
+  const categoryKey = product.category?.name
+    ? splitCatName(product.category.name).en
+    : "";
+  return categoryImage[categoryKey] ?? `${MENU_IMAGE_BASE}/appetizer.webp`;
 }
 
 function Reveal({
@@ -308,12 +389,15 @@ export default function Menu() {
   }, []);
 
   const productName = useCallback(
-    (product: ProductItem) =>
-      lang === "tr"
-        ? trNames[product.name] || product.nameEn || product.name
-        : lang === "en"
-          ? product.nameEn || product.name
-          : bgNames[product.name] || product.name,
+    (product: ProductItem) => {
+      const translatedName =
+        lang === "tr"
+          ? trNames[product.name] || product.nameEn || product.name
+          : lang === "en"
+            ? product.nameEn || product.name
+            : bgNames[product.name] || product.name;
+      return stripTrailingServing(translatedName);
+    },
     [lang]
   );
 
@@ -380,9 +464,15 @@ export default function Menu() {
 
   const sheetImages = useMemo(() => {
     if (!selectedProduct) return [];
-    if (selectedProduct.images?.length) return selectedProduct.images;
-    return selectedProduct.image ? [selectedProduct.image] : [];
+    const customImages = customProductImages(selectedProduct);
+    return customImages.length
+      ? customImages
+      : [fallbackImageForProduct(selectedProduct)];
   }, [selectedProduct]);
+
+  const sheetUsesFallback = selectedProduct
+    ? customProductImages(selectedProduct).length === 0
+    : false;
 
   const dataLoading = categoriesLoading || productsLoading;
   const dataError = categoriesError || productsError;
@@ -392,9 +482,13 @@ export default function Menu() {
   };
 
   const scrollToCategory = (categoryId: number) => {
-    document
-      .getElementById(`cat-section-${categoryId}`)
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+    document.getElementById(`cat-section-${categoryId}`)?.scrollIntoView({
+      behavior: reduceMotion ? "auto" : "smooth",
+      block: "start",
+    });
   };
 
   useEffect(() => {
@@ -545,9 +639,19 @@ export default function Menu() {
       <main>
         <section
           id="top"
-          className="relative flex min-h-[520px] h-[68svh] items-center justify-center"
+          className="relative flex h-[72svh] min-h-[540px] items-center justify-center overflow-hidden"
         >
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(227,6,20,0.09)_0%,_transparent_64%)]" />
+          <img
+            src={`${MENU_IMAGE_BASE}/steak.webp`}
+            alt=""
+            aria-hidden="true"
+            width="1600"
+            height="1200"
+            fetchPriority="high"
+            className="animate-kenburns absolute inset-0 h-full w-full object-cover object-center opacity-45"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/70 to-[#050505]" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(227,6,20,0.18)_0%,_transparent_62%)]" />
           <div
             className="animate-hero-glow absolute left-1/2 top-1/2 h-[26rem] w-[26rem] rounded-full blur-[130px]"
             style={{ backgroundColor: ACCENT }}
@@ -705,69 +809,90 @@ export default function Menu() {
                         <div className="mb-2 mt-4 h-px bg-gradient-to-r from-[#E30614]/30 to-transparent" />
                       </Reveal>
 
-                      <div>
-                        {categoryProducts.map((product, index) => (
-                          <Reveal
-                            key={product.id}
-                            delay={Math.min(index * 35, 175)}
-                          >
-                            <button
-                              type="button"
-                              onClick={() => setSelectedProduct(product)}
-                              className="group w-full border-b border-[#151515] py-4 text-left last:border-0"
+                      <div className="space-y-1">
+                        {categoryProducts.map((product, index) => {
+                          const customImages = customProductImages(product);
+                          const hasCustomImage = customImages.length > 0;
+                          const fallbackImage =
+                            fallbackImageForProduct(product);
+                          const cardImage = customImages[0] ?? fallbackImage;
+
+                          return (
+                            <Reveal
+                              key={product.id}
+                              delay={Math.min(index * 30, 150)}
                             >
-                              <span className="flex items-center gap-4">
-                                {product.image && (
-                                  <span className="block h-16 w-16 shrink-0 overflow-hidden rounded-2xl border border-[#222] bg-[#0d0d0d]">
+                              <button
+                                type="button"
+                                onClick={() => setSelectedProduct(product)}
+                                className="group -mx-3 w-[calc(100%+1.5rem)] cursor-pointer rounded-[1.35rem] border border-transparent px-3 py-3.5 text-left transition-colors duration-200 hover:border-white/[0.06] hover:bg-white/[0.035]"
+                              >
+                                <span className="flex items-start gap-3.5 md:gap-4">
+                                  <span className="block h-20 w-20 shrink-0 overflow-hidden rounded-[1.1rem] border border-white/[0.08] bg-[#0d0d0d] shadow-lg shadow-black/20 md:h-24 md:w-24">
                                     <img
-                                      src={product.image}
-                                      alt={productName(product)}
+                                      src={cardImage}
+                                      alt={
+                                        hasCustomImage
+                                          ? productName(product)
+                                          : ""
+                                      }
+                                      aria-hidden={!hasCustomImage}
+                                      width="96"
+                                      height="96"
                                       loading="lazy"
+                                      decoding="async"
                                       onError={event => {
-                                        const wrapper =
-                                          event.currentTarget.closest("span");
-                                        if (wrapper)
-                                          wrapper.style.display = "none";
+                                        const image = event.currentTarget;
+                                        if (
+                                          image.dataset.fallbackApplied ===
+                                          "true"
+                                        ) {
+                                          image.style.visibility = "hidden";
+                                          return;
+                                        }
+                                        image.dataset.fallbackApplied = "true";
+                                        image.src = fallbackImage;
+                                        image.alt = "";
                                       }}
-                                      className="animate-photo-in h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                      className="menu-photo animate-photo-in h-full w-full object-cover"
                                     />
                                   </span>
-                                )}
-                                <span className="min-w-0 flex-1">
-                                  <span className="flex items-start justify-between gap-4">
-                                    <span className="font-display text-[17px] leading-snug transition-colors group-hover:text-[#FF4D5E]">
-                                      {productName(product)}
-                                    </span>
-                                    <span className="flex shrink-0 flex-col items-end">
-                                      <span className="font-display text-lg tabular-nums text-[#FF4D5E]">
-                                        {Number(product.priceEur).toFixed(2)}
-                                        <span className="ml-0.5 text-sm">
-                                          €
+                                  <span className="min-w-0 flex-1 pt-0.5">
+                                    <span className="flex items-start justify-between gap-3">
+                                      <span className="font-display text-[18px] leading-[1.3] transition-colors duration-200 group-hover:text-[#FF4D5E] md:text-[19px]">
+                                        {productName(product)}
+                                      </span>
+                                      <span className="flex shrink-0 flex-col items-end">
+                                        <span className="font-display text-lg tabular-nums text-[#FF4D5E] md:text-xl">
+                                          {formatPrice(product.priceEur, lang)}
+                                          <span className="ml-0.5 text-sm">
+                                            €
+                                          </span>
+                                        </span>
+                                        <span className="mt-0.5 text-xs tabular-nums text-[#8b8b8b]">
+                                          {formatPrice(product.priceBgn, lang)}{" "}
+                                          {lang === "bg" ? "лв." : "BGN"}
                                         </span>
                                       </span>
-                                      <span className="text-[11px] tabular-nums text-[#777]">
-                                        {Number(product.priceBgn).toFixed(2)}{" "}
-                                        лв.
-                                      </span>
+                                    </span>
+                                    <span className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1.5">
+                                      {product.weight && (
+                                        <span className="shrink-0 rounded-full border border-white/[0.08] bg-white/[0.045] px-2 py-1 text-[11px] font-medium tracking-wide text-neutral-300">
+                                          {formatServing(product.weight, lang)}
+                                        </span>
+                                      )}
+                                      {productDescription(product) && (
+                                        <span className="line-clamp-2 min-w-0 flex-1 text-[13px] font-light leading-[1.5] text-[#999] md:text-sm">
+                                          {productDescription(product)}
+                                        </span>
+                                      )}
                                     </span>
                                   </span>
-                                  <span className="mt-1 flex items-start gap-3">
-                                    {product.weight && (
-                                      <span className="shrink-0 text-[10px] uppercase tracking-wide text-[#8a8a8a]">
-                                        {product.weight}
-                                      </span>
-                                    )}
-                                    {productDescription(product) && (
-                                      <span className="line-clamp-2 text-xs font-light leading-relaxed text-[#8a8a8a]">
-                                        {productDescription(product)}
-                                      </span>
-                                    )}
-                                  </span>
                                 </span>
-                              </span>
-                            </button>
-                          </Reveal>
-                        ))}
+                              </button>
+                            </Reveal>
+                          );
+                        })}
                       </div>
                     </section>
                   );
@@ -852,31 +977,51 @@ export default function Menu() {
                 {filteredProducts.length === 0 && (
                   <p className="p-5 text-sm text-[#8a8a8a]">{s.noResults}</p>
                 )}
-                {filteredProducts.map(product => (
-                  <button
-                    type="button"
-                    key={product.id}
-                    onClick={() => {
-                      setSelectedProduct(product);
-                      setShowSearch(false);
-                    }}
-                    className="flex min-h-16 w-full items-center justify-between gap-4 px-5 py-3.5 text-left transition-colors hover:bg-white/[0.04]"
-                  >
-                    <span className="min-w-0">
-                      <span className="block truncate font-display text-[15px]">
-                        {productName(product)}
-                      </span>
-                      {productDescription(product) && (
-                        <span className="mt-0.5 block truncate text-xs text-[#8a8a8a]">
-                          {productDescription(product)}
+                {filteredProducts.map(product => {
+                  const customImages = customProductImages(product);
+                  const resultImage =
+                    customImages[0] ?? fallbackImageForProduct(product);
+
+                  return (
+                    <button
+                      type="button"
+                      key={product.id}
+                      onClick={() => {
+                        setSelectedProduct(product);
+                        setShowSearch(false);
+                      }}
+                      className="flex min-h-20 w-full cursor-pointer items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-white/[0.04]"
+                    >
+                      <img
+                        src={resultImage}
+                        alt=""
+                        aria-hidden="true"
+                        width="52"
+                        height="52"
+                        loading="lazy"
+                        className="h-[52px] w-[52px] shrink-0 rounded-xl object-cover"
+                      />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-display text-base">
+                          {productName(product)}
                         </span>
-                      )}
-                    </span>
-                    <span className="shrink-0 font-display text-lg text-[#FF4D5E]">
-                      {Number(product.priceEur).toFixed(2)}€
-                    </span>
-                  </button>
-                ))}
+                        <span className="mt-1 flex items-center gap-2 text-xs text-[#929292]">
+                          {product.weight && (
+                            <span>{formatServing(product.weight, lang)}</span>
+                          )}
+                          {productDescription(product) && (
+                            <span className="truncate">
+                              {productDescription(product)}
+                            </span>
+                          )}
+                        </span>
+                      </span>
+                      <span className="shrink-0 font-display text-lg text-[#FF4D5E]">
+                        {formatPrice(product.priceEur, lang)}€
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -915,10 +1060,21 @@ export default function Menu() {
                   <img
                     key={sheetImages[imageIndex]}
                     src={sheetImages[imageIndex]}
-                    alt={productName(selectedProduct)}
+                    alt={sheetUsesFallback ? "" : productName(selectedProduct)}
+                    aria-hidden={sheetUsesFallback}
+                    width="1200"
+                    height="900"
+                    decoding="async"
                     onError={event => {
-                      const wrapper = event.currentTarget.closest("div");
-                      if (wrapper) wrapper.style.display = "none";
+                      const image = event.currentTarget;
+                      if (image.dataset.fallbackApplied === "true") {
+                        const wrapper = image.closest("div");
+                        if (wrapper) wrapper.style.display = "none";
+                        return;
+                      }
+                      image.dataset.fallbackApplied = "true";
+                      image.src = fallbackImageForProduct(selectedProduct);
+                      image.alt = "";
                     }}
                     className="animate-photo-in h-full w-full object-cover"
                   />
@@ -976,7 +1132,7 @@ export default function Menu() {
                   selectedProduct.nameEn &&
                   selectedProduct.nameEn !== selectedProduct.name && (
                     <p className="mt-1 text-sm font-light italic text-[#8a8a8a]">
-                      {selectedProduct.nameEn}
+                      {stripTrailingServing(selectedProduct.nameEn)}
                     </p>
                   )}
               </div>
@@ -991,7 +1147,7 @@ export default function Menu() {
                 <div className="flex items-center gap-2 text-xs text-[#8a8a8a]">
                   <span className="uppercase tracking-wider">{s.weight}</span>
                   <span className="text-neutral-300">
-                    {selectedProduct.weight}
+                    {formatServing(selectedProduct.weight, lang)}
                   </span>
                 </div>
               )}
@@ -999,11 +1155,12 @@ export default function Menu() {
               <div className="h-px bg-[#1c1c1c]" />
               <div className="flex items-end justify-between">
                 <span className="flex items-baseline gap-1 font-display text-4xl tabular-nums text-[#FF4D5E]">
-                  {Number(selectedProduct.priceEur).toFixed(2)}
+                  {formatPrice(selectedProduct.priceEur, lang)}
                   <span className="text-lg">€</span>
                 </span>
                 <span className="text-sm tabular-nums text-[#8a8a8a]">
-                  {Number(selectedProduct.priceBgn).toFixed(2)} лв.
+                  {formatPrice(selectedProduct.priceBgn, lang)}{" "}
+                  {lang === "bg" ? "лв." : "BGN"}
                 </span>
               </div>
             </div>
