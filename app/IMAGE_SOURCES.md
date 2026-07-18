@@ -1,7 +1,20 @@
 # Djanam menu image sources
 
-The images in `public/images/menu/` are local, optimized WebP category fallbacks.
-Product-specific images from the database always take priority.
+Every seeded menu item has its own local image in `public/images/products/`.
+The one-to-one product/source list is stored in
+[`public/images/products/manifest.json`](public/images/products/manifest.json).
+The manifest contains 191 unique product records and 191 unique Pexels photo IDs.
+Product-specific images from the database always take priority over these stock
+images.
+
+The product images are used under the
+[Pexels License](https://www.pexels.com/legal-pages/license/). Pexels attribution
+is not required, but the original source page for every image is retained in the
+manifest.
+
+The images in `public/images/menu/` are local, optimized WebP assets used for
+page-level artwork such as the hero background; they are no longer reused as
+product thumbnails.
 
 All source pages state that the image is free to use under the
 [Unsplash License](https://unsplash.com/license).

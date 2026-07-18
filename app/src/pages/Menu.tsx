@@ -220,29 +220,7 @@ const t = {
 
 const ACCENT = "#E30614";
 const MENU_IMAGE_BASE = "./images/menu";
-
-const categoryImage: Record<string, string> = {
-  Salads: `${MENU_IMAGE_BASE}/salad.webp`,
-  Appetizer: `${MENU_IMAGE_BASE}/appetizer.webp`,
-  Bread: `${MENU_IMAGE_BASE}/bread.webp`,
-  Starters: `${MENU_IMAGE_BASE}/appetizer.webp`,
-  Beef: `${MENU_IMAGE_BASE}/steak.webp`,
-  Lamb: `${MENU_IMAGE_BASE}/steak.webp`,
-  Poultry: `${MENU_IMAGE_BASE}/poultry.webp`,
-  Fish: `${MENU_IMAGE_BASE}/fish.webp`,
-  Desserts: `${MENU_IMAGE_BASE}/dessert.webp`,
-  Whiskey: `${MENU_IMAGE_BASE}/cocktail.webp`,
-  "Gin & Rum": `${MENU_IMAGE_BASE}/cocktail.webp`,
-  Vodka: `${MENU_IMAGE_BASE}/cocktail.webp`,
-  "Anise Drinks": `${MENU_IMAGE_BASE}/cocktail.webp`,
-  Rakia: `${MENU_IMAGE_BASE}/cocktail.webp`,
-  Liquors: `${MENU_IMAGE_BASE}/cocktail.webp`,
-  Tequila: `${MENU_IMAGE_BASE}/cocktail.webp`,
-  Beer: `${MENU_IMAGE_BASE}/beer.webp`,
-  "Soft Drinks": `${MENU_IMAGE_BASE}/cocktail.webp`,
-  "Fresh Juices": `${MENU_IMAGE_BASE}/cocktail.webp`,
-  "Hot Drinks": `${MENU_IMAGE_BASE}/coffee.webp`,
-};
+const PRODUCT_IMAGE_BASE = "./images/products";
 
 const unitLabel: Record<Lang, { g: string; ml: string; l: string }> = {
   bg: { g: "г", ml: "мл", l: "л" },
@@ -299,11 +277,17 @@ function customProductImages(product: ProductItem): string[] {
   return product.image ? [product.image] : [];
 }
 
-function fallbackImageForProduct(product: ProductItem): string {
-  const categoryKey = product.category?.name
-    ? splitCatName(product.category.name).en
-    : "";
-  return categoryImage[categoryKey] ?? `${MENU_IMAGE_BASE}/appetizer.webp`;
+function productImageSlug(value: string): string {
+  return value
+    .normalize("NFKD")
+    .toLowerCase()
+    .replace(/[’']/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function stockProductImage(product: ProductItem): string {
+  return `${PRODUCT_IMAGE_BASE}/${productImageSlug(product.name)}.jpg`;
 }
 
 function Reveal({
@@ -467,10 +451,10 @@ export default function Menu() {
     const customImages = customProductImages(selectedProduct);
     return customImages.length
       ? customImages
-      : [fallbackImageForProduct(selectedProduct)];
+      : [stockProductImage(selectedProduct)];
   }, [selectedProduct]);
 
-  const sheetUsesFallback = selectedProduct
+  const sheetUsesStock = selectedProduct
     ? customProductImages(selectedProduct).length === 0
     : false;
 
@@ -813,9 +797,8 @@ export default function Menu() {
                         {categoryProducts.map((product, index) => {
                           const customImages = customProductImages(product);
                           const hasCustomImage = customImages.length > 0;
-                          const fallbackImage =
-                            fallbackImageForProduct(product);
-                          const cardImage = customImages[0] ?? fallbackImage;
+                          const stockImage = stockProductImage(product);
+                          const cardImage = customImages[0] ?? stockImage;
 
                           return (
                             <Reveal
@@ -844,15 +827,19 @@ export default function Menu() {
                                       onError={event => {
                                         const image = event.currentTarget;
                                         if (
-                                          image.dataset.fallbackApplied ===
-                                          "true"
+                                          hasCustomImage &&
+                                          image.dataset.stockApplied !== "true"
                                         ) {
-                                          image.style.visibility = "hidden";
+                                          image.dataset.stockApplied = "true";
+                                          image.src = stockImage;
+                                          image.alt = "";
+                                          image.setAttribute(
+                                            "aria-hidden",
+                                            "true"
+                                          );
                                           return;
                                         }
-                                        image.dataset.fallbackApplied = "true";
-                                        image.src = fallbackImage;
-                                        image.alt = "";
+                                        image.parentElement?.remove();
                                       }}
                                       className="menu-photo animate-photo-in h-full w-full object-cover"
                                     />
@@ -979,8 +966,8 @@ export default function Menu() {
                 )}
                 {filteredProducts.map(product => {
                   const customImages = customProductImages(product);
-                  const resultImage =
-                    customImages[0] ?? fallbackImageForProduct(product);
+                  const stockImage = stockProductImage(product);
+                  const resultImage = customImages[0] ?? stockImage;
 
                   return (
                     <button
@@ -999,6 +986,18 @@ export default function Menu() {
                         width="52"
                         height="52"
                         loading="lazy"
+                        onError={event => {
+                          const image = event.currentTarget;
+                          if (
+                            customImages.length > 0 &&
+                            image.dataset.stockApplied !== "true"
+                          ) {
+                            image.dataset.stockApplied = "true";
+                            image.src = stockImage;
+                            return;
+                          }
+                          image.remove();
+                        }}
                         className="h-[52px] w-[52px] shrink-0 rounded-xl object-cover"
                       />
                       <span className="min-w-0 flex-1">
@@ -1060,21 +1059,25 @@ export default function Menu() {
                   <img
                     key={sheetImages[imageIndex]}
                     src={sheetImages[imageIndex]}
-                    alt={sheetUsesFallback ? "" : productName(selectedProduct)}
-                    aria-hidden={sheetUsesFallback}
+                    alt={sheetUsesStock ? "" : productName(selectedProduct)}
+                    aria-hidden={sheetUsesStock}
                     width="1200"
                     height="900"
                     decoding="async"
                     onError={event => {
                       const image = event.currentTarget;
-                      if (image.dataset.fallbackApplied === "true") {
-                        const wrapper = image.closest("div");
-                        if (wrapper) wrapper.style.display = "none";
+                      if (
+                        !sheetUsesStock &&
+                        image.dataset.stockApplied !== "true"
+                      ) {
+                        image.dataset.stockApplied = "true";
+                        image.src = stockProductImage(selectedProduct);
+                        image.alt = "";
+                        image.setAttribute("aria-hidden", "true");
                         return;
                       }
-                      image.dataset.fallbackApplied = "true";
-                      image.src = fallbackImageForProduct(selectedProduct);
-                      image.alt = "";
+                      const wrapper = image.closest("div");
+                      if (wrapper) wrapper.style.display = "none";
                     }}
                     className="animate-photo-in h-full w-full object-cover"
                   />
