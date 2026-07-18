@@ -18,7 +18,6 @@ import {
   CupSoda,
   Fish,
   GlassWater,
-  Globe,
   Instagram,
   LayoutGrid,
   Loader2,
@@ -864,39 +863,34 @@ export default function Menu() {
   return (
     <div className="min-h-screen overflow-x-clip bg-[#050505] text-[#f5f2ec]">
       <header
-        className={`fixed inset-x-0 top-0 z-50 border-b transition-all duration-300 ${
+        className={`fixed inset-x-0 top-0 z-50 transition-colors duration-300 ${
           headerSolid
-            ? "border-white/[0.07] bg-[#050505]/95 shadow-2xl shadow-black/20 backdrop-blur-xl"
-            : "border-transparent bg-gradient-to-b from-black/80 to-transparent"
+            ? "border-b border-white/[0.06] bg-[#0a0a0a] shadow-lg shadow-black/40"
+            : "bg-gradient-to-b from-black/50 to-transparent"
         }`}
       >
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 md:px-8">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:px-8">
           <a
             href="#top"
-            className="flex items-center gap-3"
+            className="flex items-center gap-2.5 drop-shadow-[0_1px_10px_rgba(0,0,0,0.6)]"
             aria-label="Djanam Steak & Fish"
           >
-            <img
-              src="./bull-icon.png"
-              alt=""
-              className="h-9 w-9 object-contain"
-            />
-            <span className="font-display text-base tracking-wide">Djanam</span>
+            <img src="./bull-icon.png" alt="" className="h-9 w-9 object-contain" />
+            <span className="font-display text-[19px] leading-none tracking-wide">
+              Djanam
+            </span>
           </a>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
             <div className="relative">
               <button
                 type="button"
                 onClick={() => setShowLangMenu(open => !open)}
                 aria-label={s.language}
                 aria-expanded={showLangMenu}
-                className="flex h-11 items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.07] px-3 backdrop-blur transition-colors hover:bg-white/[0.14]"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/[0.12] bg-white/[0.08] text-[11px] font-semibold uppercase tracking-wider text-neutral-100 backdrop-blur-md transition-colors hover:bg-white/[0.16] active:scale-95"
               >
-                <Globe className="h-3.5 w-3.5 text-neutral-400" />
-                <span className="text-[11px] font-medium uppercase tracking-wider">
-                  {lang}
-                </span>
+                {lang}
               </button>
               {showLangMenu && (
                 <>
@@ -906,7 +900,7 @@ export default function Menu() {
                     className="fixed inset-0 z-40 cursor-default"
                     onClick={() => setShowLangMenu(false)}
                   />
-                  <div className="animate-fade-in absolute right-0 top-[3.25rem] z-50 w-40 overflow-hidden rounded-2xl border border-[#2b2b2b] bg-[#0e0e0e] shadow-2xl">
+                  <div className="animate-fade-in absolute right-0 top-[3.25rem] z-50 w-44 overflow-hidden rounded-2xl border border-white/10 bg-[#111] shadow-2xl shadow-black/50">
                     {(
                       [
                         ["bg", "Български"],
@@ -938,9 +932,9 @@ export default function Menu() {
               type="button"
               onClick={() => setShowSearch(true)}
               aria-label={s.search}
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.07] backdrop-blur transition-colors hover:bg-white/[0.14]"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-white/[0.12] bg-white/[0.08] text-neutral-100 backdrop-blur-md transition-colors hover:bg-white/[0.16] active:scale-95"
             >
-              <Search className="h-4 w-4" />
+              <Search className="h-[18px] w-[18px]" />
             </button>
 
             {availableBadges.length > 0 && (
@@ -948,11 +942,11 @@ export default function Menu() {
                 type="button"
                 onClick={() => setShowFilters(true)}
                 aria-label={s.filters}
-                className="relative flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.07] backdrop-blur transition-colors hover:bg-white/[0.14]"
+                className="relative flex h-10 w-10 items-center justify-center rounded-full border border-white/[0.12] bg-white/[0.08] text-neutral-100 backdrop-blur-md transition-colors hover:bg-white/[0.16] active:scale-95"
               >
-                <SlidersHorizontal className="h-4 w-4" />
+                <SlidersHorizontal className="h-[18px] w-[18px]" />
                 {activeFilters.length > 0 && (
-                  <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#E30614] px-1 text-[10px] font-semibold tabular-nums text-white">
+                  <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#E30614] px-1 text-[9px] font-semibold tabular-nums text-white ring-2 ring-[#0a0a0a]">
                     {activeFilters.length}
                   </span>
                 )}
@@ -964,11 +958,11 @@ export default function Menu() {
                 type="button"
                 onClick={() => setShowCart(true)}
                 aria-label={`${s.cart}${cartCount ? `, ${cartCount} ${s.inCart}` : ""}`}
-                className="relative flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.07] backdrop-blur transition-colors hover:bg-white/[0.14]"
+                className="relative flex h-10 w-10 items-center justify-center rounded-full border border-white/[0.12] bg-white/[0.08] text-neutral-100 backdrop-blur-md transition-colors hover:bg-white/[0.16] active:scale-95"
               >
-                <ShoppingBag className="h-4 w-4" />
+                <ShoppingBag className="h-[18px] w-[18px]" />
                 {cartCount > 0 && (
-                  <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#E30614] px-1 text-[10px] font-semibold tabular-nums text-white">
+                  <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#E30614] px-1 text-[9px] font-semibold tabular-nums text-white ring-2 ring-[#0a0a0a]">
                     {cartCount}
                   </span>
                 )}
@@ -1032,7 +1026,7 @@ export default function Menu() {
           {!dataLoading && !dataError && categoryOrder.length > 0 && (
             <nav
               aria-label={s.categories}
-              className="sticky top-16 z-40 -mx-5 mb-3 flex items-center gap-2 border-b border-white/[0.06] bg-[#050505]/95 px-5 backdrop-blur-xl md:-mx-8 md:px-8"
+              className="sticky top-16 z-40 -mx-5 mb-3 flex items-center gap-2 border-b border-white/[0.06] bg-[#0a0a0a] px-5 shadow-md shadow-black/30 md:-mx-8 md:px-8"
             >
               <button
                 type="button"
@@ -1863,13 +1857,13 @@ export default function Menu() {
         </div>
       )}
 
-      {canOrder && (
-        <div className="fixed bottom-5 right-4 z-[55] flex flex-col items-end gap-2">
+      {canOrder && headerSolid && (
+        <div className="animate-fade-in fixed bottom-5 right-4 z-[55] flex flex-col items-end gap-2.5">
           <button
             type="button"
             onClick={() => callService("waiter")}
             disabled={serviceRequest.isPending}
-            className="flex h-12 items-center gap-2 rounded-full border border-white/10 bg-[#141414]/95 px-4 text-sm font-medium text-white shadow-2xl shadow-black/40 backdrop-blur transition-colors hover:bg-[#1e1e1e] disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex h-11 items-center gap-2 rounded-full border border-white/[0.08] bg-[#161616]/90 pl-3.5 pr-4 text-[13px] font-medium text-neutral-100 shadow-xl shadow-black/50 backdrop-blur-md transition-all hover:bg-[#202020] active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
           >
             <Bell className="h-4 w-4 text-[#FF4D5E]" />
             {s.callWaiter}
@@ -1878,7 +1872,7 @@ export default function Menu() {
             type="button"
             onClick={() => callService("bill")}
             disabled={serviceRequest.isPending}
-            className="flex h-11 items-center gap-2 rounded-full border border-white/10 bg-[#141414]/95 px-4 text-sm font-medium text-white shadow-2xl shadow-black/40 backdrop-blur transition-colors hover:bg-[#1e1e1e] disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex h-11 items-center gap-2 rounded-full border border-white/[0.08] bg-[#161616]/90 pl-3.5 pr-4 text-[13px] font-medium text-neutral-100 shadow-xl shadow-black/50 backdrop-blur-md transition-all hover:bg-[#202020] active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
           >
             <Receipt className="h-4 w-4 text-[#FF4D5E]" />
             {s.requestBill}
