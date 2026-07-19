@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { trpc } from "@/providers/trpc";
 import { bgNames } from "@/i18n/bg";
 import { trDescriptions, trNames } from "@/i18n/tr";
+import { ruNames } from "@/i18n/ru";
 import {
   Beef,
   Bell,
@@ -642,9 +643,11 @@ export default function Menu() {
       const translatedName =
         lang === "tr"
           ? trNames[product.name] || product.nameEn || product.name
-          : lang === "en" || lang === "ru"
-            ? product.nameEn || product.name
-            : bgNames[product.name] || product.name;
+          : lang === "ru"
+            ? ruNames[product.name] || product.nameEn || product.name
+            : lang === "en"
+              ? product.nameEn || product.name
+              : bgNames[product.name] || product.name;
       return stripTrailingServing(translatedName);
     },
     [lang]
@@ -702,6 +705,7 @@ export default function Menu() {
         product.nameEn,
         bgNames[product.name],
         trNames[product.name],
+        ruNames[product.name],
         productDescription(product),
         product.category?.name,
       ]
